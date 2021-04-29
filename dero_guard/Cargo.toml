@@ -1,0 +1,7 @@
+[package]
+name = "dero_guard"
+version = "0.1.0"
+authors = ["Adrien Navratil <adrien1975@live.fr>"]
+edition = "2018"
+
+[dependencies]

@@ -1,0 +1,8 @@
+[package]
+name = "dero_guard_server"
+version = "0.1.0"
+authors = ["Adrien Navratil <adrien1975@live.fr>"]
+edition = "2018"
+
+[dependencies]
+dero_guard = { path = "../dero_guard" }

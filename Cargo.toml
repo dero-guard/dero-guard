@@ -1,0 +1,7 @@
+[workspace]
+
+members = [
+    "dero_guard",
+    "dero_guard_client",
+    "dero_guard_server"
+]
