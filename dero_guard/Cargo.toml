@@ -5,3 +5,7 @@ authors = ["Adrien Navratil <adrien1975@live.fr>"]
 edition = "2018"
 
 [dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+reqwest = { version = "0.11", features = ["json"] }
+failure = "0.1"
