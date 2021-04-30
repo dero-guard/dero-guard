@@ -76,11 +76,11 @@ ListenPort = {}
 PrivateKey = {}", config.listen_port, config.keys.private_key);
 
     for peer in &config.peers {
-        result += &format!("\n\
+        result += &format!("\n
 [Peer]
 PublicKey = {}
 AllowedIPs = {}
-        ", peer.public_key, peer.allowed_ips);
+PersistentKeepalive = 25", peer.public_key, peer.allowed_ips);
 
         if let Some(endpoint) = &peer.endpoint {
             result += &format!("\nEndpoint = {}", endpoint);
@@ -97,7 +97,7 @@ AllowedIPs = {}
 
     println!(" - Generated wireguard configuration at '{:?}'", file);
 
-    execute(vec!["wg", "setconf", DEVICE_NAME, &format!("{:?}", file)])?;
+    execute(vec!["wg", "setconf", DEVICE_NAME, &format!("{}", file.display())])?;
 
     Ok(())
 }

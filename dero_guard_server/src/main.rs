@@ -7,8 +7,14 @@ use dero_guard::dero::{BlockCountResponse, GetTransfersResponse, TransferParams,
 
 mod vpn;
 
+use vpn::{VPN, VPNError};
+
 #[tokio::main]
 async fn main() {
+    if let Err(error) = start_vpn() {
+        eprintln!("Error during VPN initialization: {}", error);
+    }
+
     if let Err(error) = print_block_count().await {
         eprintln!("Error while querying block count: {}", error);
     }
@@ -64,5 +70,12 @@ async fn get_txs(params: GetTransfersParams) -> Result<GetTransfersResponse, Err
 async fn send_tx(params: TransferParams) -> Result<(), Error> {
     let client = JsonRPCClient::new("http://127.0.0.1:40403/json_rpc");
     client.notify_with("transfer", &params).await?;
+    Ok(())
+}
+
+fn start_vpn() -> Result<(), VPNError> {
+    let mut vpn = VPN::new()?;
+    vpn.add_client("CLIENT PUBLIC KEY".into())?;
+
     Ok(())
 }

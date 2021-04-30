@@ -40,7 +40,12 @@ impl VPN {
 
         apply_configuration(&self.config)?;
 
-        execute(vec!["ip", "route", "add", "", "via", &address])?;
+        let route = execute(vec!["ip", "route", "get", &address])?;
+        let route = route
+            .split(" ")
+            .collect::<Vec<&str>>();
+
+        execute(vec!["ip", "route", "add", route[0], route[1], route[2]])?;
         execute(vec!["ip", "route", "add", "0/1", "dev", DEVICE_NAME])?;
         execute(vec!["ip", "route", "add", "128/1", "dev", DEVICE_NAME])?;
 

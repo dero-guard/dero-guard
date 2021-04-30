@@ -2,9 +2,9 @@ use dero_guard::wg::{WireguardConfig, setup_interface, load_keys, WireguardError
 use dero_guard::command::execute;
 
 const BASE_ADDRESS: &str = "10.0.0";
-const LOCAL_ADDRESS: &str = "10.0.0.1";
-const ADDRESS_RANGE: &str = "24";
+const LOCAL_ADDRESS: &str = "10.0.0.1/24";
 const SOURCE_ADDRESS: &str = "10.0.0.0/24";
+const ADDRESS_MASK: &str = "24";
 const OUTPUT_INTERFACE: &str = "eth0";
 const PORT: u16 = 22350;
 
@@ -17,7 +17,7 @@ pub type VPNError = WireguardError;
 
 impl VPN {
     pub fn new() -> Result<VPN, VPNError> {
-        setup_interface("10.0.0.1")?;
+        setup_interface(LOCAL_ADDRESS)?;
         execute(vec![
             "iptables",
             "-t", "nat",
@@ -46,12 +46,12 @@ impl VPN {
     }
 
     pub fn add_client(&mut self, public_key: String) -> Result<String, VPNError> {
-        let address = format!("{}.{}", BASE_ADDRESS, self.next_ip);
+        let address = format!("{}.{}/{}", BASE_ADDRESS, self.next_ip, ADDRESS_MASK);
 
         self.next_ip += 1;
         self.config.peers.push(WireguardPeer {
             public_key: public_key.clone(),
-            allowed_ips: format!("{}/{}", address, ADDRESS_RANGE),
+            allowed_ips: address.clone(),
             endpoint: None
         });
 
