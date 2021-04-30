@@ -1,9 +1,11 @@
 use tokio;
 use failure::Error;
-
 use serde_json::json;
+
 use dero_guard::json_rpc::JsonRPCClient;
 use dero_guard::dero::{BlockCountResponse, GetTransfersResponse, TransferParams, GetTransfersParams, Transfer, Argument, DataType};
+
+mod vpn;
 
 #[tokio::main]
 async fn main() {
