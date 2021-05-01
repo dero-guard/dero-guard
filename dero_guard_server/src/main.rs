@@ -9,6 +9,11 @@ use service::Service;
 
 #[tokio::main]
 async fn main() {
+    if std::env::args().len() < 2 {
+        println!("Usage: dero_guard_server <public_ip_address>");
+        return;
+    }
+
     if let Err(error) = start_service().await {
         eprintln!("Error during Service initialization: {}", error);
     }

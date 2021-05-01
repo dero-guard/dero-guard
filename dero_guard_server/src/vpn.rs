@@ -1,4 +1,4 @@
-use dero_guard::wg::{WireguardConfig, setup_interface, load_keys, WireguardError, apply_configuration, WireguardPeer};
+use dero_guard::wg::*;
 use dero_guard::command::execute;
 
 const BASE_ADDRESS: &str = "10.0.0";
@@ -39,6 +39,10 @@ impl VPN {
 
     pub fn get_public_key(&self) -> &str {
         &self.config.keys.public_key
+    }
+
+    pub fn get_address(&self) -> &str {
+        std::env::args().collect::<Vec<&str>>().remove(1)
     }
 
     pub fn get_port(&self) -> u16 {
