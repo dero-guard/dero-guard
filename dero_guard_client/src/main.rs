@@ -1,21 +1,20 @@
 mod vpn;
+mod service;
 
+use failure::Error;
+use tokio;
+use service::Service;
 use vpn::{VPNError, VPN};
 
-fn main() {
-    if let Err(err) = start_vpn() {
-        eprintln!("Error while starting VPN: {}", err);
+#[tokio::main]
+async fn main() {
+    //start_vpn();
+    if let Err(e) = start_service().await {
+        eprintln!("Error during starting service: {}", e);
     }
 }
 
-fn start_vpn() -> Result<(), VPNError> {
-    let mut vpn = VPN::new()?;
-    vpn.connect(
-        "SERVER PUBLIC KEY".into(),
-        "SERVER IP ADDRESS".into(),
-        22350,
-        "10.0.0.2/24".into()
-    )?;
-
-    Ok(())
+async fn start_service() -> Result<(), Error> {
+    let mut service = Service::new("http://127.0.0.1:40402", VPN::new()?).await?;
+    service.run().await
 }

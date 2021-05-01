@@ -103,6 +103,8 @@ name = "dero_guard_client"
 version = "0.1.0"
 dependencies = [
  "dero_guard",
+ "failure",
+ "tokio",
 ]
 
 [[package]]

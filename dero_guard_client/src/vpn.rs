@@ -22,6 +22,10 @@ impl VPN {
         })
     }
 
+    pub fn get_public_key(&self) -> &str {
+        &self.config.keys.public_key
+    }
+
     pub fn connect(
         &mut self,
         public_key: String,
