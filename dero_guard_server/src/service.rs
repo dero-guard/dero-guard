@@ -33,9 +33,7 @@ impl Service {
         println!("Running Service!");
         loop {
             let height = self.parent.get_height().await?.height;
-            println!("Current height is {}, old is {}", height, self.block_height);
             if self.block_height < height {
-                println!("Retrieve TXs");
                 self.block_height = height;
                 if let Ok(value) = self.parent.get_txs(GetTransfersParams { _in: true, min_height: height }).await {
                     println!("TXs found: {}", value.entries.len());
