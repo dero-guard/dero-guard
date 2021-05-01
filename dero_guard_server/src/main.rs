@@ -20,7 +20,6 @@ async fn main() {
 }
 
 async fn start_service() -> Result<(), Error> {
-    let mut vpn = VPN::new()?;
-    let mut service = Service::new("http://127.0.0.1:40403/json_rpc", vpn).await?;
-    service.run().await?
+    let mut service = Service::new("http://127.0.0.1:40403/json_rpc", VPN::new()?).await?;
+    service.run().await
 }

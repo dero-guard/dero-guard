@@ -13,18 +13,14 @@ use serde_json::json;
 pub struct Service {
     parent: CommonService,
     vpn: VPN,
-    public_address: String,
-    port: u16,
 }
 
 impl Service {
-    pub async fn new(target: &str, vpn: VPN, public_address: String, port: u16) -> Result<Service, JsonRPCError> {
+    pub async fn new(target: &str, vpn: VPN) -> Result<Service, JsonRPCError> {
         let client = JsonRPCClient::new(target);
         let service = Service {
             parent: CommonService::new(client, false).await?,
-            vpn,
-            public_address,
-            port
+            vpn
         };
 
         Ok(service)
@@ -54,12 +50,12 @@ impl Service {
                                     Argument {
                                         name: "IP".into(),
                                         datatype: "S".into(),
-                                        value: Value::String(self.public_address.clone()),
+                                        value: Value::String(self.vpn.get_address()),
                                     },
                                     Argument {
                                         name: "PO".into(),
                                         datatype: "U".into(),
-                                        value: json!(self.port),
+                                        value: json!(self.vpn.get_port()),
                                     },
                                     Argument {
                                         name: "LO".into(),
