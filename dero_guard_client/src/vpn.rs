@@ -1,4 +1,4 @@
-use dero_guard::wg::{WireguardConfig, WireguardError, setup_interface, load_keys, WireguardPeer, apply_configuration, DEVICE_NAME};
+use dero_guard::wg::*;
 use dero_guard::command::execute;
 
 const PORT: u16 = 23500;
@@ -39,15 +39,7 @@ impl VPN {
         });
 
         apply_configuration(&self.config)?;
-
-        let route = execute(vec!["ip", "route", "get", &address])?;
-        let route = route
-            .split(" ")
-            .collect::<Vec<&str>>();
-
-        execute(vec!["ip", "route", "add", route[0], route[1], route[2]])?;
-        execute(vec!["ip", "route", "add", "0/1", "dev", DEVICE_NAME])?;
-        execute(vec!["ip", "route", "add", "128/1", "dev", DEVICE_NAME])?;
+        edit_route(&address, "add")?;
 
         println!(" - Connected to '{}', local address is '{}'", address, local_address);
 
@@ -55,13 +47,30 @@ impl VPN {
     }
 
     pub fn disconnect(&mut self) -> Result<(), VPNError> {
-        self.local_address = None;
         while self.config.peers.len() > 0 {
             self.config.peers.remove(0);
         }
 
+        if let Some(address) = &self.local_address {
+            edit_route(address, "del")?;
+        }
+
+        self.local_address = None;
         println!(" - Disconnected");
 
         Ok(())
     }
+}
+
+fn edit_route(address: &str, action: &str) -> Result<(), VPNError> {
+    let route = execute(vec!["ip", "route", "get", &address])?;
+    let route = route
+        .split(" ")
+        .collect::<Vec<&str>>();
+
+    execute(vec!["ip", "route", action, route[0], route[1], route[2]])?;
+    execute(vec!["ip", "route", action, "0/1", "dev", DEVICE_NAME])?;
+    execute(vec!["ip", "route", action, "128/1", "dev", DEVICE_NAME])?;
+
+    Ok(())
 }

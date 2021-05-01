@@ -1,4 +1,4 @@
-use dero_guard::wg::{WireguardConfig, setup_interface, load_keys, WireguardError, apply_configuration, WireguardPeer};
+use dero_guard::wg::*;
 use dero_guard::command::execute;
 
 const BASE_ADDRESS: &str = "10.0.0";
