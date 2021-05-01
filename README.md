@@ -8,6 +8,7 @@ Building this project requires a working [Rust](https://rustup.rs/) (stable) too
 
 - Linux
 - DERO Daemon
+- DERO Wallet CLI (with `--rpc-server`)
 - Wireguard
 - Ipoute2
 - iptables
