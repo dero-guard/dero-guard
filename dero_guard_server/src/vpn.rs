@@ -41,6 +41,10 @@ impl VPN {
         &self.config.keys.public_key
     }
 
+    pub fn get_address(&self) -> &str {
+        std::env::args().collect::<Vec<&str>>().remove(1)
+    }
+
     pub fn get_port(&self) -> u16 {
         self.config.listen_port
     }
