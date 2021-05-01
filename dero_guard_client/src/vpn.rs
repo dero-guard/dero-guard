@@ -45,7 +45,7 @@ impl VPN {
         apply_configuration(&self.config)?;
         edit_route(&address, "add")?;
 
-        println!(" - Connected to '{}', local address is '{}'", address, local_address);
+        println!(" - Connected to '{}:{}', local address is '{}'", address, port, local_address);
 
         Ok(())
     }

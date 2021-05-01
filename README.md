@@ -12,6 +12,9 @@ Building this project requires a working [Rust](https://rustup.rs/) (stable) too
 - Ipoute2
 - iptables
 
+Proper IPv4 forwarding setup must be done server-side, see
+[Wireguard Arch wiki page](https://wiki.archlinux.org/index.php/WireGuard)
+
 ## Setting-up a server
 
 ```bash
@@ -39,3 +42,5 @@ it paid for, the connection will be closed by the server. Each server can define
 In the future, a GUI will be added to the client which will be able to see a list of available servers with their
 location and bandwidth price. The client also only works on Linux now but will be adapted to work on both macOS and
 Windows. The server will remain available on Linux only.
+
+Bandwidth monitoring isn't integrated for now.

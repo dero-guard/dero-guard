@@ -89,8 +89,9 @@ PersistentKeepalive = 25", peer.public_key, peer.allowed_ips);
 
     let file = get_folder()?.join("generated.conf");
     let mut config = OpenOptions::new()
-        .create(!file.exists())
+        .create(true)
         .write(true)
+        .truncate(true)
         .open(&file)?;
 
     config.write_all(result.as_bytes())?;
