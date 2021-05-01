@@ -37,6 +37,7 @@ impl Service {
             ],
         };
 
+        println!("sending TX for registration");
         self.parent.send_tx(param).await?;
 
         loop {

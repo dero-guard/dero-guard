@@ -1,32 +1,21 @@
 use tokio;
-use dero_guard::json_rpc::{JsonRPCClient, JsonRPCError};
-use dero_guard::service::Service;
 
 mod vpn;
+mod service;
 
-use vpn::{VPN, VPNError};
+use failure::Error;
+use vpn::VPN;
+use service::Service;
 
 #[tokio::main]
 async fn main() {
     if let Err(error) = start_service().await {
         eprintln!("Error during Service initialization: {}", error);
     }
-
-    /*if let Err(error) = start_vpn() {
-        eprintln!("Error during VPN initialization: {}", error);
-    }*/
 }
 
-async fn start_service() -> Result<(), JsonRPCError> {
-    let client = JsonRPCClient::new("http://127.0.0.1:40403");
-    let service = Service::new(client).await?;
-    
-    Ok(())
-}
-
-fn start_vpn() -> Result<(), VPNError> {
+async fn start_service() -> Result<(), Error> {
     let mut vpn = VPN::new()?;
-    vpn.add_client("CLIENT PUBLIC KEY".into())?;
-
-    Ok(())
+    let mut service = Service::new("http://127.0.0.1:40403/json_rpc", vpn).await?;
+    service.run().await?
 }
