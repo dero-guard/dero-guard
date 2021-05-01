@@ -64,4 +64,8 @@ impl VPN {
 
         Ok(())
     }
+
+    pub fn get_public_key(&self) -> &str {
+        &self.config.keys.public_key
+    }
 }

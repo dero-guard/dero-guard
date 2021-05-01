@@ -8,12 +8,7 @@ pub struct BlockCountResponse {
 
 #[derive(Deserialize, Debug)]
 pub struct GetTransfersResponse {
-    entries: Vec<Entry>
-}
-
-#[derive(Serialize)]
-pub struct TransferParams {
-    pub transfers: Vec<Transfer>
+    pub entries: Vec<Entry>
 }
 
 #[derive(Serialize)]
@@ -57,12 +52,22 @@ pub struct Entry {
     pub srcport: u64,
 }
 
+#[derive(Deserialize)]
+pub struct GetHeightResponse {
+    pub height: u64
+}
+
+#[derive(Serialize)]
+pub struct TransferSC {
+    pub scid: String,
+    pub amount: u64,
+    pub payload_rpc: Vec<Argument>
+}
+
 #[derive(Serialize)]
 pub struct Transfer {
-    //pub scid: String, TODO fix it
     pub destination: String,
     pub amount: u64,
-    pub burn: u64,
     pub payload_rpc: Vec<Argument>
 }
 
@@ -71,30 +76,4 @@ pub struct Argument {
     pub name: String,
     pub datatype: String,
     pub value: serde_json::Value
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub enum DataType {
-    String,
-    Int64,
-    Uint64,
-    Float64,
-    Hash, //256 bit hash
-    Address,
-    Time
-}
-
-impl DataType {
-    pub fn to_string(&self) -> String {
-        use DataType::*;
-        match self {
-            String => "S",
-            Int64 => "I",
-            Uint64 => "U",
-            Float64 => "F",
-            Hash => "H",
-            Address => "A",
-            Time => "T",
-        }.to_string()
-    }
 }

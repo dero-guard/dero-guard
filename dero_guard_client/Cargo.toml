@@ -1,8 +1,10 @@
 [package]
 name = "dero_guard_client"
 version = "0.1.0"
-authors = ["Adrien Navratil <adrien1975@live.fr>"]
+authors = ["Adrien Navratil <adrien1975@live.fr>", "Slixe <slixeprivate@gmail.com>"]
 edition = "2018"
 
 [dependencies]
 dero_guard = { path = "../dero_guard" }
+tokio = { version = "1.5", features = ["macros", "rt-multi-thread"] }
+failure = "0.1"
