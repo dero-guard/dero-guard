@@ -44,3 +44,8 @@ location and bandwidth price. The client also only works on Linux now but will b
 Windows. The server will remain available on Linux only.
 
 Bandwidth monitoring isn't integrated for now.
+
+## Result
+
+![Example](https://cdn.discordapp.com/attachments/226418730542956544/838119630634876998/unknown.png)
+![Example 2](https://cdn.discordapp.com/attachments/226418730542956544/838119923954876416/unknown.png)
