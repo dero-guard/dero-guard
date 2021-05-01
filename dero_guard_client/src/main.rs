@@ -4,11 +4,15 @@ mod service;
 use failure::Error;
 use tokio;
 use service::Service;
-use vpn::{VPNError, VPN};
+use vpn::VPN;
 
 #[tokio::main]
 async fn main() {
-    //start_vpn();
+    if std::env::args().len() < 2 {
+        println!("Usage: dero_guard_client <dero_address>");
+        return;
+    }
+
     if let Err(e) = start_service().await {
         eprintln!("Error during starting service: {}", e);
     }

@@ -6,7 +6,7 @@ const LOCAL_ADDRESS: &str = "10.0.0.1/24";
 const SOURCE_ADDRESS: &str = "10.0.0.0/24";
 const ADDRESS_MASK: &str = "24";
 const OUTPUT_INTERFACE: &str = "eth0";
-const PORT: u16 = 22350;
+const PORT: u16 = 50000;//22350;
 
 pub struct VPN {
     config: WireguardConfig,

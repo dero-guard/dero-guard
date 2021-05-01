@@ -83,7 +83,6 @@ impl JsonRPCClient {
     }
 
     async fn send<R: DeserializeOwned>(&self, value: Value) -> JsonRPCResult<R> {
-        println!("Request: {}", serde_json::to_string_pretty(&value)?);
         let mut response: Value = self.http.post(&self.target)
             .json(&value)
             .send()
@@ -91,7 +90,6 @@ impl JsonRPCClient {
             .json()
             .await?;
 
-        println!("Response: {}", serde_json::to_string_pretty(&response)?);
         if let Some(error) = response.get_mut("error") {
             let error: JsonRPCErrorResponse = serde_json::from_value(error.take())?;
             let data = match error.data {
