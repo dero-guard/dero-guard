@@ -42,7 +42,7 @@ impl VPN {
     }
 
     pub fn get_address(&self) -> &str {
-        std::env::args().collect::<Vec<&str>>().remove(1)
+        &std::env::args().collect::<Vec<String>>().remove(1)
     }
 
     pub fn get_port(&self) -> u16 {
