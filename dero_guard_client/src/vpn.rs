@@ -4,8 +4,7 @@ use dero_guard::command::execute;
 const PORT: u16 = 23500;
 
 pub struct VPN {
-    config: WireguardConfig,
-    local_address: Option<String>
+    config: WireguardConfig
 }
 
 pub type VPNError = WireguardError;
@@ -17,8 +16,7 @@ impl VPN {
                 keys: load_keys()?,
                 listen_port: PORT,
                 peers: Vec::new()
-            },
-            local_address: None
+            }
         })
     }
 
@@ -35,7 +33,6 @@ impl VPN {
     ) -> Result<(), VPNError> {
         setup_interface(&local_address)?;
 
-        self.local_address = Some(local_address.clone());
         self.config.peers.push(WireguardPeer {
             public_key,
             allowed_ips: "0.0.0.0/0".into(),
@@ -50,16 +47,14 @@ impl VPN {
         Ok(())
     }
 
-    pub fn disconnect(&mut self) -> Result<(), VPNError> {
+    pub fn disconnect(&mut self, address: &str) -> Result<(), VPNError> {
         while self.config.peers.len() > 0 {
             self.config.peers.remove(0);
         }
 
-        if let Some(address) = &self.local_address {
-            edit_route(address, "del")?;
-        }
+        edit_route(address, "del")?;
+        remove_interface()?;
 
-        self.local_address = None;
         println!(" - Disconnected");
 
         Ok(())

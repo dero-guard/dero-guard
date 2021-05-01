@@ -59,13 +59,19 @@ pub fn load_keys() -> Result<WireguardKeys, WireguardError> {
 }
 
 pub fn setup_interface(address: &str) -> Result<(), WireguardError> {
-    execute(vec!["ip", "link", "del", "dev", DEVICE_NAME])?;
+    remove_interface()?;
+
     execute(vec!["ip", "link", "add", "dev", DEVICE_NAME, "type", "wireguard"])?;
     execute(vec!["ip", "address", "add", "dev", DEVICE_NAME, address])?;
     execute(vec!["ip", "link", "set", "up", "dev", DEVICE_NAME])?;
 
     println!(" - Set up interface with local address '{}'", address);
 
+    Ok(())
+}
+
+pub fn remove_interface() -> Result<(), WireguardError> {
+    execute(vec!["ip", "link", "del", "dev", DEVICE_NAME])?;
     Ok(())
 }
 

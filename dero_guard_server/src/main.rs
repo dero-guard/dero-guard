@@ -4,13 +4,21 @@ mod vpn;
 mod service;
 
 use failure::Error;
-use vpn::VPN;
+use vpn::{VPN, flush};
 use service::Service;
 
 #[tokio::main]
 async fn main() {
     if std::env::args().len() < 2 {
-        println!("Usage: dero_guard_server <public_ip_address>");
+        println!("Usage: dero_guard_server [--flush] <public_ip_address>");
+        return;
+    }
+
+    if std::env::args().find(|a| a == "--flush").is_some() {
+        if let Err(e) = flush() {
+            eprintln!("Error while flushing devices: {}", e);
+        }
+
         return;
     }
 
