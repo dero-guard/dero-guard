@@ -121,7 +121,8 @@ pub fn get_bandwidth(public_key: &str) -> Result<BandwidthUsage, WireguardError>
 
     let output = execute(vec!["wg", "show", DEVICE_NAME])?;
     let expr = format!(
-        "peer: {}\\n(  [^\\n]+\\n){{3}}  transfer: (\\d+\\.\\d+) ([PTKMG]?iB) received, (\\d+\\.\\d+) ([PTKMG]?iB) sent",
+        "interface: {}\\n( {{2}}[^\\n]+\\n){{3}}\\npeer: {}\\n( {{2}}[^\\n]+\\n){{3}} {{2}}transfer: (\\d+\\.\\d+) ([PTKMG]?iB) received, (\\d+\\.\\d+) ([PTKMG]?iB) sent",
+        DEVICE_NAME,
         regex::escape(public_key)
     );
     let re = regex::Regex::new(&expr).unwrap();
