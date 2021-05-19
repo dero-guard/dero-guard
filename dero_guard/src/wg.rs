@@ -6,6 +6,7 @@ use std::io::{Write, Read, Error as IoError};
 use failure::Fail;
 
 use crate::command::{execute_with, execute, ExecutionError};
+use std::str::FromStr;
 
 pub const DEVICE_NAME: &str = "dero-guard";
 
@@ -24,6 +25,12 @@ pub struct WireguardPeer {
     pub public_key: String,
     pub allowed_ips: String,
     pub endpoint: Option<String>
+}
+
+#[derive(Debug)]
+pub struct BandwidthUsage {
+    pub download: u64,
+    pub upload: u64
 }
 
 pub fn load_keys() -> Result<WireguardKeys, WireguardError> {
@@ -102,6 +109,50 @@ PersistentKeepalive = 25", peer.public_key, peer.allowed_ips);
     Ok(())
 }
 
+pub fn get_bandwidth(public_key: &str) -> Result<BandwidthUsage, WireguardError> {
+    use WireguardError::ContentParsingError;
+
+    let output = execute(vec!["wg", "show", DEVICE_NAME])?;
+    let expr = format!(
+        "peer: {}\\n(  [^\\n]+\\n){{3}}  transfer: (\\d+\\.\\d+) ([PTKMG]?iB) received, (\\d+\\.\\d+) ([PTKMG]?iB) sent",
+        regex::escape(public_key)
+    );
+    let re = regex::Regex::new(&expr).unwrap();
+    let captures = re.captures(&output).ok_or(ContentParsingError)?;
+
+    let len = captures.len();
+    if len < 4 {
+        return Err(ContentParsingError);
+    }
+
+    let capture = |s: isize| captures.get((len as isize + s) as usize).ok_or(ContentParsingError);
+    let read_float = |m: regex::Match| f64::from_str(m.as_str()).map_err(|_| ContentParsingError);
+    let read_unit = |m: regex::Match| {
+        let mut pow = 1usize;
+        let unit = m.as_str().chars().nth(0).ok_or(ContentParsingError)?;
+
+        for u in &['B', 'K', 'M', 'G', 'T', 'P'] {
+            if unit == *u {
+                return Ok(pow);
+            }
+
+            pow *= 1000;
+        }
+
+        Err(ContentParsingError)
+    };
+
+    let dl_amount = read_float(capture(-4)?)?;
+    let dl_unit = read_unit(capture(-3)?)?;
+    let up_amount = read_float(capture(-2)?)?;
+    let up_unit = read_unit(capture(-1)?)?;
+
+    Ok(BandwidthUsage {
+        download: (dl_amount * dl_unit as f64) as u64,
+        upload: (up_amount * up_unit as f64) as u64
+    })
+}
+
 fn get_folder() -> Result<PathBuf, IoError> {
     let folder = match std::env::var("HOME") {
         Ok(home) => PathBuf::from(format!("{}/.config/dero-guard", home)),
@@ -125,7 +176,10 @@ pub enum WireguardError {
     #[fail(display = "Error during command execution: {}", inner)]
     ExecError {
         inner: ExecutionError
-    }
+    },
+
+    #[fail(display = "Cannot parse wireguard command output")]
+    ContentParsingError
 }
 
 impl From<IoError> for WireguardError {

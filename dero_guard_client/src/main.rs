@@ -8,7 +8,6 @@ use vpn::{VPNError, VPN};
 
 #[tokio::main]
 async fn main() {
-    //start_vpn();
     if let Err(e) = start_service().await {
         eprintln!("Error during starting service: {}", e);
     }
