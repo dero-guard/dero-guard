@@ -10,12 +10,13 @@ pub fn execute(line: Vec<&str>) -> Result<String, ExecutionError> {
 pub fn execute_with(line: Vec<&str>, input: &str) -> Result<String, ExecutionError> {
     use ExecutionError::*;
 
-    println!("> {}", line.join(" "));
+    println!("   > {}", line.join(" "));
 
     let mut process = Command::new(line.get(0).ok_or(EmptyLine)?)
         .args(&line[1..])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
         .spawn()
         .map_err(|err| ExecError { inner: err })?;
 
@@ -27,7 +28,7 @@ pub fn execute_with(line: Vec<&str>, input: &str) -> Result<String, ExecutionErr
 
     let stderr = read_output(stderr)?;
     if !stderr.is_empty() {
-        eprintln!("{}", stderr);
+        eprintln!("     /!\\ {}", stderr.trim());
     }
 
     Ok(read_output(stdout)?.trim().to_string())

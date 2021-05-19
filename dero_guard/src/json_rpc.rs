@@ -90,7 +90,6 @@ impl JsonRPCClient {
             .json()
             .await?;
 
-            println!("{:?}", serde_json::to_string_pretty(&response));
         if let Some(error) = response.get_mut("error") {
             let error: JsonRPCErrorResponse = serde_json::from_value(error.take())?;
             let data = match error.data {

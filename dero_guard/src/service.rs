@@ -36,7 +36,7 @@ impl CommonService {
 
     pub fn get_payload_value_number(&self, name: &str, elements: &Vec<Argument>) -> Option<u16> {
         for el in elements {
-            if el.name == name && el.datatype == "N" {
+            if el.name == name && el.datatype == "U" {
                 match el.value.clone() {
                     serde_json::Value::Number(s) => return s.as_u64().map(|e| e as u16),
                     _ => {}

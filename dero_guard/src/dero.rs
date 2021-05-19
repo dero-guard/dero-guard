@@ -6,7 +6,7 @@ pub struct BlockCountResponse {
     pub status: String
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize)]
 pub struct GetTransfersResponse {
     pub entries: Vec<Entry>
 }
@@ -16,16 +16,16 @@ pub struct GetTransfersParams {
     //pub coinbase: bool,
     #[serde(rename(serialize = "in"))]
     pub _in: bool,
-    /*pub out: bool,
+    //pub out: bool,
     pub min_height: u64,
-    pub max_height: u64,
+    /*pub max_height: u64,
     pub sender: String,
     pub receiver: String,
     pub dstport: u64,
     pub srcport: u64*/
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize)]
 pub struct Entry {
     pub height: u64,
     pub topoheight: u64,

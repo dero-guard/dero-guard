@@ -6,7 +6,7 @@ const LOCAL_ADDRESS: &str = "10.0.0.1/24";
 const SOURCE_ADDRESS: &str = "10.0.0.0/24";
 const ADDRESS_MASK: &str = "24";
 const OUTPUT_INTERFACE: &str = "eth0";
-const PORT: u16 = 22350;
+const PORT: u16 = 50000;//22350;
 
 pub struct VPN {
     config: WireguardConfig,
@@ -18,14 +18,7 @@ pub type VPNError = WireguardError;
 impl VPN {
     pub fn new() -> Result<VPN, VPNError> {
         setup_interface(LOCAL_ADDRESS)?;
-        execute(vec![
-            "iptables",
-            "-t", "nat",
-            "-A", "POSTROUTING",
-            "-s", SOURCE_ADDRESS,
-            "-o", OUTPUT_INTERFACE,
-            "-j", "MASQUERADE"
-        ])?;
+        apply_nat("-A")?;
 
         let config = WireguardConfig {
             keys: load_keys()?,
@@ -81,4 +74,26 @@ impl VPN {
             Ok(false)
         }
     }
+}
+
+pub fn flush() -> Result<(), VPNError> {
+    apply_nat("-D")?;
+    remove_interface()?;
+
+    println!(" - Flushed");
+
+    Ok(())
+}
+
+fn apply_nat(method: &str) -> Result<(), VPNError> {
+    execute(vec![
+        "iptables",
+        "-t", "nat",
+        method, "POSTROUTING",
+        "-s", SOURCE_ADDRESS,
+        "-o", OUTPUT_INTERFACE,
+        "-j", "MASQUERADE"
+    ])?;
+
+    Ok(())
 }
