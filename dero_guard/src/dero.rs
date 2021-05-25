@@ -77,3 +77,10 @@ pub struct Argument {
     pub datatype: String,
     pub value: serde_json::Value
 }
+
+pub struct Provider {
+    pub name: String,
+    pub location: String,
+    pub address: String,
+    pub price_per_gb: u64,
+}

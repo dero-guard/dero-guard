@@ -18,7 +18,7 @@ impl Service {
     pub async fn new(target: &str, vpn: VPN) -> Result<Service, JsonRPCError> {
         let client = JsonRPCClient::new(target);
         let mut service = Service {
-            parent: CommonService::new(client, false).await?,
+            parent: CommonService::new(client).await?,
             vpn,
             block_height: 0,
         };
@@ -69,5 +69,10 @@ impl Service {
 
             thread::sleep(Duration::from_secs(1));
         }
+    }
+
+    pub fn get_providers(&self) -> Vec<Provider> {
+        let providers = vec![];
+        providers
     }
 }

@@ -5,15 +5,13 @@ use serde_json::json;
 
 pub struct CommonService {
     client: JsonRPCClient,
-    server_side: bool,
 }
 
 impl CommonService {
 
-    pub async fn new(client: JsonRPCClient, server_side: bool) -> Result<CommonService, JsonRPCError> {
+    pub async fn new(client: JsonRPCClient) -> Result<CommonService, JsonRPCError> {
         let service = CommonService {
-            client,
-            server_side,
+            client
         };
 
         service.get_height().await?;
