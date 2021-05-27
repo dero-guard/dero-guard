@@ -3,8 +3,19 @@ name = "dero_guard_client"
 version = "0.1.0"
 authors = ["Adrien Navratil <adrien1975@live.fr>", "Slixe <slixeprivate@gmail.com>"]
 edition = "2018"
+exclude = ["index.node"]
+
+[lib]
+crate-type = ["cdylib"]
 
 [dependencies]
 dero_guard = { path = "../dero_guard" }
 tokio = { version = "1.5", features = ["macros", "rt-multi-thread"] }
 failure = "0.1"
+lazy_static = "1.4"
+futures = "0.3"
+
+[dependencies.neon]
+version = "0.8"
+default-features = false
+features = ["napi-6"]

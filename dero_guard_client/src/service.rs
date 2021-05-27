@@ -1,6 +1,7 @@
 use dero_guard::service::CommonService;
 use dero_guard::dero::*;
 use dero_guard::json_rpc::{JsonRPCClient, JsonRPCError};
+use dero_guard::wg::{BandwidthUsage, get_bandwidth};
 
 use failure::Error;
 use crate::vpn::*;
@@ -12,6 +13,8 @@ pub struct Service {
     parent: CommonService,
     vpn: VPN,
     block_height: u64,
+
+    connected: Option<String>
 }
 
 impl Service {
@@ -21,6 +24,8 @@ impl Service {
             parent: CommonService::new(client).await?,
             vpn,
             block_height: 0,
+
+            connected: None
         };
 
         service.block_height = service.parent.get_height().await?.height;
@@ -28,10 +33,10 @@ impl Service {
         Ok(service)
     }
 
-    pub async fn run(&mut self) -> Result<(), Error> {
+    pub async fn connect(&mut self, public_key: String, amount: u64) -> Result<String, Error> {
         let param = Transfer {
-            amount: 1,
-            destination: std::env::args().collect::<Vec<String>>().remove(1).into(), //TODO config
+            amount,
+            destination: public_key,
             payload_rpc: vec![
                 Argument {
                     name: "PK".into(),
@@ -44,7 +49,11 @@ impl Service {
         println!("sending TX for registration");
         self.parent.send_tx(param).await?;
 
-        loop {
+        if let Some(address) = &self.connected {
+            return Ok(address.clone());
+        }
+
+        while self.connected.is_none() {
             let height = self.parent.get_height().await?.height;
             if self.block_height < height {
                 self.block_height = height;
@@ -60,7 +69,10 @@ impl Service {
     
                             if opt_pkey.is_some() && opt_ip.is_some() && opt_port.is_some() && opt_local.is_some() {
                                 println!("Connecting to VPN...");
-                                self.vpn.connect(opt_pkey.unwrap(), opt_ip.unwrap(), opt_port.unwrap(), opt_local.unwrap())?;
+                                let address = opt_ip.unwrap();
+                                self.vpn.connect(opt_pkey.unwrap(), address.clone(), opt_port.unwrap(), opt_local.unwrap())?;
+
+                                self.connected = Some(address);
                             }
                         }
                     }
@@ -69,10 +81,29 @@ impl Service {
 
             thread::sleep(Duration::from_secs(1));
         }
+
+        Ok(self.connected.as_ref().unwrap().clone())
+    }
+
+    pub fn disconnect(&mut self) -> Result<(), Error> {
+        Ok(if let Some(address) = &self.connected {
+            self.vpn.disconnect(address)?
+        } else {
+            ()
+        })
+    }
+
+    pub fn get_bandwidth(&self, public_key: String) -> Result<BandwidthUsage, Error> {
+        Ok(get_bandwidth(&public_key)?)
     }
 
     pub fn get_providers(&self) -> Vec<Provider> {
-        let providers = vec![];
-        providers
+        vec![Provider {
+            location: "fr".into(),
+            name: "Litarvan's test VPN".into(),
+            rate: 0.01,
+
+            public_key: "".into()
+        }]
     }
 }

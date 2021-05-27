@@ -81,6 +81,6 @@ pub struct Argument {
 pub struct Provider {
     pub name: String,
     pub location: String,
-    pub address: String,
-    pub price_per_gb: u64,
+    pub public_key: String,
+    pub rate: f64
 }

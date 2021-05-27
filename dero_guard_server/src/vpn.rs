@@ -84,7 +84,7 @@ impl VPN {
             self.find_client(&public_key).unwrap()
         };
 
-        let amount = Decimal::from(paid) / dec!(1000000000000) * rate;
+        let amount = Decimal::from(paid) / dec!(100000) * rate;
         println!(" - Client '{}' paid {} $DERO to add {} GB to its balance", public_key, paid, amount);
 
         client.balance += amount.to_u64().unwrap();
