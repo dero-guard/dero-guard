@@ -114,7 +114,7 @@ impl Service {
                 GetSCParams {
                     code: false,
                     scid: String::from(
-                        "94064cf9838a354e4afd8cd09a63ccfcffabdc879b331a71cbe8228ca7adfa7d",
+                        "e48de7a8cb79a71a60ed75121fc28a972dfe964be85942f9570837996eb5f5ed",
                     ),
                     keysstring: vec![
                         format!("provider_{}_price", id),
@@ -147,27 +147,28 @@ impl Service {
                 GetSCParams {
                     code: false,
                     scid: String::from(
-                        "94064cf9838a354e4afd8cd09a63ccfcffabdc879b331a71cbe8228ca7adfa7d",
+                        "e48de7a8cb79a71a60ed75121fc28a972dfe964be85942f9570837996eb5f5ed",
                     ), //TODO Config
                     keysstring: vec![String::from("total")],
                 },
             )
         {
             Ok(res) => res,
-            Err(err) => panic!(err),
+            Err(err) => panic!("{}", err),
         };
 
         let total = match res.valuesstring.remove(0).parse::<u64>() {
             Ok(v) => v,
-            Err(e) => panic!(e),
+            Err(e) => panic!("{}", e),
         };
         let mut providers = vec![];
-        let i = 0;
+        let mut i = 0;
         while i < total {
             providers.push(match self.get_provider(i) {
                 Ok(v) => v,
-                Err(err) => panic!(err),
+                Err(err) => panic!("{}", err),
             });
+            i = i + 1;
         }
 
         providers*/
