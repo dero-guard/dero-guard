@@ -1,3 +1,6 @@
+use std::fs::OpenOptions;
+use std::io::Write;
+
 use dero_guard::wg::*;
 use dero_guard::command::execute;
 
@@ -31,7 +34,8 @@ impl VPN {
         port: u16,
         local_address: String
     ) -> Result<(), VPNError> {
-        setup_interface(&local_address)?;
+        let keys = load_keys()?;
+        /*setup_interface(&local_address)?;
 
         self.config.peers.push(WireguardPeer {
             public_key,
@@ -40,7 +44,32 @@ impl VPN {
         });
 
         apply_configuration(&self.config)?;
-        edit_route(&address, "add")?;
+        edit_route(&address, "add")?;*/
+
+        let mut result = format!("\
+[Interface]
+PrivateKey = {}
+Address = {}
+DNS = 1.1.1.1, 1.0.0.1
+
+[Peer]
+PublicKey = {}
+Endpoint = {}:{}
+AllowedIPs = 0.0.0.0/0", keys.private_key, local_address, public_key, address, port);
+
+        let file = get_folder()?.join("generated.conf");
+        let mut config = OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(true)
+            .open(&file)?;
+
+        config.write_all(result.as_bytes())?;
+
+        println!(" - Generated wireguard configuration at '{:?}'", file);
+
+        // execute(vec!["wg", "setconf", DEVICE_NAME, &format!("{}", file.display())])?;
+        execute(vec!["wg-quick", "up", file.to_str().unwrap()])?;
 
         println!(" - Connected to '{}:{}', local address is '{}'", address, port, local_address);
 
@@ -52,8 +81,11 @@ impl VPN {
             self.config.peers.remove(0);
         }
 
-        edit_route(address, "del")?;
-        remove_interface()?;
+        // edit_route(address, "del")?;
+        // remove_interface()?;
+
+        let file = get_folder()?.join("generated.conf");
+        execute(vec!["wg-quick", "down", file.to_str().unwrap()])?;
 
         println!(" - Disconnected");
 

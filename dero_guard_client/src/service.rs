@@ -103,7 +103,7 @@ impl Service {
             name: "Litarvan's test VPN".into(),
             rate: 0.01,
 
-            public_key: "".into()
+            public_key: "2DCmANjNZTztYdYfEXFnQeAcDhYqPC4XGYGEbQ+pGj0=".into()
         }]
     }
 }

@@ -2,6 +2,7 @@ use std::sync::Mutex;
 
 use neon::prelude::*;
 use lazy_static::lazy_static;
+// use tokio::runtime::Runtime;
 
 mod service;
 mod vpn;
@@ -13,6 +14,8 @@ lazy_static! {
     static ref SERVICE: Mutex<Service> = Mutex::new(futures::executor::block_on(
         service::Service::new("http://127.0.0.1:40404/json_rpc", VPN::new().unwrap())
     ).unwrap());
+
+    // static ref RUNTIME: Runtime = Runtime::new().unwrap();
 }
 
 fn providers(mut cx: FunctionContext) -> JsResult<JsArray> {
@@ -46,10 +49,18 @@ fn refill(mut cx: FunctionContext) -> JsResult<JsString> {
     let public_key = cx.argument::<JsString>(0)?.value(&mut cx);
     let amount = cx.argument::<JsNumber>(1)?.value(&mut cx);
 
+    // let cb = cx.argument::<JsFunction>(2)?.root(&mut cx);
+
+    /*RUNTIME.spawn(async move {
+        service.connect(public_key, (amount * 100000f64) as u64).await.unwrap();
+        let address = cx.string(result);
+        address.
+    });*/
     let result = futures::executor::block_on(service.connect(public_key, (amount * 100000f64) as u64)).unwrap();
     let address = cx.string(result);
 
     Ok(address)
+    //Ok(cx.undefined())
 }
 
 fn disconnect(mut cx: FunctionContext) -> JsResult<JsUndefined> {

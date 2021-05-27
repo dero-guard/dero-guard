@@ -161,7 +161,7 @@ pub fn get_bandwidth(public_key: &str) -> Result<BandwidthUsage, WireguardError>
     })
 }
 
-fn get_folder() -> Result<PathBuf, IoError> {
+pub fn get_folder() -> Result<PathBuf, IoError> {
     let folder = match std::env::var("HOME") {
         Ok(home) => PathBuf::from(format!("{}/.config/dero-guard", home)),
         Err(_) => PathBuf::from(".dero-guard"),
