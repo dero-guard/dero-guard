@@ -114,7 +114,7 @@ impl Service {
                 GetSCParams {
                     code: false,
                     scid: String::from(
-                        "94064cf9838a354e4afd8cd09a63ccfcffabdc879b331a71cbe8228ca7adfa7d",
+                        "e48de7a8cb79a71a60ed75121fc28a972dfe964be85942f9570837996eb5f5ed",
                     ),
                     keysstring: vec![
                         format!("provider_{}_price", id),
@@ -148,7 +148,7 @@ impl Service {
                 GetSCParams {
                     code: false,
                     scid: String::from(
-                        "94064cf9838a354e4afd8cd09a63ccfcffabdc879b331a71cbe8228ca7adfa7d",
+                        "e48de7a8cb79a71a60ed75121fc28a972dfe964be85942f9570837996eb5f5ed",
                     ), //TODO Config
                     keysstring: vec![String::from("total")],
                 },
