@@ -139,8 +139,7 @@ impl Service {
     }
 
     pub fn get_providers(&self) -> Vec<Provider> {
-        //TODO delete async
-        /*let mut res: GetSCResponse = match self
+        let mut res: GetSCResponse = match self
             .daemon_rpc
             .call_with(
                 "getsc",
@@ -171,12 +170,6 @@ impl Service {
             i = i + 1;
         }
 
-        providers*/
-        vec![Provider {
-            location: "fr".into(),
-            name: "Litarvan's test VPN".into(),
-            dero_address: "deto1qxqp9lquvzejrxlct5jjlntwe26kuk53646gz8ege7k0ah9kzma7yts6fg3va".into(),
-            rate: 0.01
-        }]
+        providers
     }
 }
