@@ -9,6 +9,7 @@ mod vpn;
 
 use service::Service;
 use vpn::VPN;
+use dero_guard::wg::BandwidthUsage;
 
 lazy_static! {
     static ref SERVICE: Mutex<Service> = Mutex::new(
@@ -21,8 +22,8 @@ lazy_static! {
 fn providers(mut cx: FunctionContext) -> JsResult<JsArray> {
     let service = SERVICE.lock().unwrap();
 
-    let js_array = JsArray::new(&mut cx, 3);
     let providers = service.get_providers();
+    let js_array = JsArray::new(&mut cx, providers.len() as u32);
 
     for (i, provider) in providers.into_iter().enumerate() {
         //TODO fix into_iter from async func
@@ -81,7 +82,10 @@ fn bandwidth(mut cx: FunctionContext) -> JsResult<JsObject> {
     let service = SERVICE.lock().unwrap();
 
     let public_key = cx.argument::<JsString>(0)?.value(&mut cx);
-    let bandwidth = service.get_bandwidth(public_key).unwrap();
+    let bandwidth = service.get_bandwidth(public_key).unwrap_or(BandwidthUsage {
+        download: 0,
+        upload: 0
+    });
 
     let object = JsObject::new(&mut cx);
 

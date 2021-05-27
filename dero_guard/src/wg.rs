@@ -141,10 +141,12 @@ PersistentKeepalive = 25",
 pub fn get_bandwidth(public_key: &str) -> Result<BandwidthUsage, WireguardError> {
     use WireguardError::ContentParsingError;
 
-    let output = execute(vec!["wg", "show", DEVICE_NAME])?;
+    let device = if std::env::consts::OS == "macos" { "utun2" } else { DEVICE_NAME };
+
+    let output = execute(vec!["wg", "show", device])?;
     let expr = format!(
         "interface: {}\\n( {{2}}[^\\n]+\\n){{3}}\\npeer: {}\\n( {{2}}[^\\n]+\\n){{3}} {{2}}transfer: (\\d+\\.\\d+) ([PTKMG]?iB) received, (\\d+\\.\\d+) ([PTKMG]?iB) sent",
-        DEVICE_NAME,
+        device,
         regex::escape(public_key)
     );
     let re = regex::Regex::new(&expr).unwrap();

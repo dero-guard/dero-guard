@@ -84,13 +84,14 @@ impl VPN {
             self.find_client(&public_key).unwrap()
         };
 
-        let amount = Decimal::from(paid) / dec!(100000) * rate;
+        let paid = Decimal::from(paid) / dec!(100000);
+        let amount = paid / rate;
         println!(
             " - Client '{}' paid {} $DERO to add {} GB to its balance",
             public_key, paid, amount
         );
 
-        client.balance += amount.to_u64().unwrap();
+        client.balance += (amount * dec!(1000000000)).to_u64().unwrap();
 
         let peer = if let Some(peer) = self.find_peer(&public_key) {
             peer
@@ -164,6 +165,9 @@ impl VPN {
             let bandwidth = get_bandwidth(&client.public_key)?;
             let diff = (bandwidth.download - client.last_download)
                 + (bandwidth.upload - client.last_upload);
+
+            println!(" - Client '{}' balance -= {}", client.public_key, diff);
+            println!("   Balance is now '{}'", client.balance);
 
             if client.balance <= diff {
                 client.balance = 0;
