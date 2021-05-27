@@ -1,5 +1,5 @@
-use crate::json_rpc::{JsonRPCClient, JsonRPCError};
 use crate::dero::*;
+use crate::json_rpc::{JsonRPCClient, JsonRPCError};
 use failure::Error;
 use serde_json::json;
 
@@ -8,13 +8,12 @@ pub struct CommonService {
 }
 
 impl CommonService {
-
-    pub async fn new(client: JsonRPCClient) -> Result<CommonService, JsonRPCError> {
+    pub fn new(client: JsonRPCClient) -> Result<CommonService, JsonRPCError> {
         let service = CommonService {
             client
         };
 
-        service.get_height().await?;
+        service.get_height()?;
 
         Ok(service)
     }
@@ -45,27 +44,28 @@ impl CommonService {
         None
     }
 
-    pub async fn get_height(&self) -> Result<GetHeightResponse, JsonRPCError> {
-        let response: GetHeightResponse = self.client.call("getheight").await?;
+    pub fn get_height(&self) -> Result<GetHeightResponse, JsonRPCError> {
+        let response: GetHeightResponse = self.client.call("getheight")?;
         Ok(response)
     }
 
-    pub async fn get_txs(&self, params: GetTransfersParams) -> Result<GetTransfersResponse, Error> {
-        let response: GetTransfersResponse = self.client.call_with("get_transfers", &params).await?;
+    pub fn get_txs(&self, params: GetTransfersParams) -> Result<GetTransfersResponse, Error> {
+        let response: GetTransfersResponse = self.client.call_with("get_transfers", &params)?;
         Ok(response)
     }
 
-    pub async fn send_tx(&self, transfer: Transfer) -> Result<(), Error> {
+    pub fn send_tx(&self, transfer: Transfer) -> Result<(), Error> {
         self.client.notify_with("transfer", json!({
             "transfers": vec![transfer]
-        })).await?;
+        }))?;
         Ok(())
     }
 
-    pub async fn send_tx_to_sc(&self, transfer: TransferSC) -> Result<(), Error> {
+    pub fn send_tx_to_sc(&self, transfer: TransferSC) -> Result<(), Error> {
         self.client.notify_with("transfer", json!({
             "transfers": vec![transfer]
-        })).await?;
+        }))?;
+
         Ok(())
     }
 }

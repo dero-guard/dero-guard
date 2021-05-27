@@ -1,5 +1,5 @@
+use std::io::{Error as IoError, Write};
 use std::process::{Command, Stdio};
-use std::io::{Write, Error as IoError};
 
 use failure::Fail;
 
@@ -21,9 +21,12 @@ pub fn execute_with(line: Vec<&str>, input: &str) -> Result<String, ExecutionErr
         .map_err(|err| ExecError { inner: err })?;
 
     let stdin = process.stdin.as_mut().ok_or(NoStdin)?;
-    stdin.write_all(input.as_bytes()).map_err(|err| WriteError { inner: err })?;
+    stdin
+        .write_all(input.as_bytes())
+        .map_err(|err| WriteError { inner: err })?;
 
-    let std::process::Output { stdout, stderr, .. } = process.wait_with_output()
+    let std::process::Output { stdout, stderr, .. } = process
+        .wait_with_output()
         .map_err(|err| ExecError { inner: err })?;
 
     let stderr = read_output(stderr)?;
@@ -35,9 +38,7 @@ pub fn execute_with(line: Vec<&str>, input: &str) -> Result<String, ExecutionErr
 }
 
 fn read_output(output: Vec<u8>) -> Result<String, ExecutionError> {
-    String::from_utf8(output).map_err(|err| ExecutionError::UTF8Error {
-        inner: err
-    })
+    String::from_utf8(output).map_err(|err| ExecutionError::UTF8Error { inner: err })
 }
 
 #[derive(Debug, Fail)]
@@ -49,17 +50,11 @@ pub enum ExecutionError {
     NoStdin,
 
     #[fail(display = "I/O error while writing to standard input: {}", inner)]
-    WriteError {
-        inner: IoError
-    },
+    WriteError { inner: IoError },
 
     #[fail(display = "Error while parsing command output as UTF-8: {}", inner)]
-    UTF8Error {
-        inner: std::string::FromUtf8Error
-    },
+    UTF8Error { inner: std::string::FromUtf8Error },
 
     #[fail(display = "Error during command execution: {}", inner)]
-    ExecError {
-        inner: IoError
-    }
+    ExecError { inner: IoError },
 }

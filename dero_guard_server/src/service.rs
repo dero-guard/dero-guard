@@ -1,14 +1,14 @@
-use dero_guard::service::CommonService;
 use dero_guard::dero::*;
 use dero_guard::json_rpc::{JsonRPCClient, JsonRPCError};
+use dero_guard::service::CommonService;
 
-use failure::Error;
 use crate::vpn::*;
+use failure::Error;
 
+use serde_json::json;
+use serde_json::Value;
 use std::thread;
 use std::time::Duration;
-use serde_json::Value;
-use serde_json::json;
 
 pub struct Service {
     parent: CommonService,
@@ -17,35 +17,35 @@ pub struct Service {
 }
 
 impl Service {
-    pub async fn new(target: &str, vpn: VPN) -> Result<Service, JsonRPCError> {
+    pub fn new(target: &str, vpn: VPN) -> Result<Service, JsonRPCError> {
         let client = JsonRPCClient::new(target);
         let mut service = Service {
-            parent: CommonService::new(client).await?,
+            parent: CommonService::new(client)?,
             vpn,
             block_height: 0,
         };
-        service.block_height = service.parent.get_height().await?.height;
+        service.block_height = service.parent.get_height()?.height;
 
         Ok(service)
     }
 
-    pub async fn run(&mut self) -> Result<(), Error> {
+    pub fn run(&mut self) -> Result<(), Error> {
         println!("Running Service!");
         loop {
             if let Err(err) = self.vpn.update() {
                 eprintln!("Error during VPN update: {}", err);
             }
 
-            let height = self.parent.get_height().await?.height;
+            let height = self.parent.get_height()?.height;
             if self.block_height < height {
                 self.block_height = height;
-                if let Ok(value) = self.parent.get_txs(GetTransfersParams { _in: true, min_height: height }).await {
+                if let Ok(value) = self.parent.get_txs(GetTransfersParams { _in: true, min_height: height }) {
                     println!("TXs found: {}", value.entries.len());
                     for entry in value.entries {
                         if entry.payload_rpc.len() == 1 {
                             println!("Found TX for VPN!");
                             let opt_pkey = self.parent.get_payload_value("PK", &entry.payload_rpc);
-    
+
                             if let Some(pk) = opt_pkey {
                                 println!("Adding user to VPN server!");
                                 let local_address = self.vpn.refill_client(pk, entry.amount)?;
@@ -74,7 +74,7 @@ impl Service {
                                             value: Value::String(local_address),
                                         },
                                     ]
-                                }).await;
+                                });
     
                                 if let Err(e) = result {
                                     println!("Error while sending TX reply to User: {}", e);

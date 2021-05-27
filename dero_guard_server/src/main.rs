@@ -1,18 +1,17 @@
 use std::str::FromStr;
 
-use tokio;
 use failure::Error;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
+// use tokio;
 
-mod vpn;
 mod service;
+mod vpn;
 
-use vpn::{VPN, flush};
 use service::Service;
+use vpn::{flush, VPN};
 
-#[tokio::main]
-async fn main() {
+fn main() {
     if std::env::args().find(|a| a == "--flush").is_some() {
         if let Err(e) = flush() {
             eprintln!("Error while flushing devices: {}", e);
@@ -39,7 +38,7 @@ async fn main() {
         println!("Public I.P. address: {}", address);
         println!("Rate: 1GB = {} $DERO\n", rate);
 
-        if let Err(error) = start_service(address, rate).await {
+        if let Err(error) = start_service(address, rate) {
             eprintln!("Error during Service initialization: {}", error);
         }
     } else {
@@ -47,9 +46,9 @@ async fn main() {
     }
 }
 
-async fn start_service(address: &str, rate: Decimal) -> Result<(), Error> {
+fn start_service(address: &str, rate: Decimal) -> Result<(), Error> {
     let vpn = VPN::new(address, rate)?;
-    let mut service = Service::new("http://127.0.0.1:40403/json_rpc", vpn).await?;
+    let mut service = Service::new("http://127.0.0.1:40403/json_rpc", vpn)?;
 
-    service.run().await
+    service.run()
 }

@@ -1,14 +1,14 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
 pub struct BlockCountResponse {
     pub count: u64,
-    pub status: String
+    pub status: String,
 }
 
 #[derive(Deserialize, Serialize)]
 pub struct GetTransfersResponse {
-    pub entries: Vec<Entry>
+    pub entries: Vec<Entry>,
 }
 
 #[derive(Serialize)]
@@ -54,33 +54,48 @@ pub struct Entry {
 
 #[derive(Deserialize)]
 pub struct GetHeightResponse {
-    pub height: u64
+    pub height: u64,
 }
 
 #[derive(Serialize)]
 pub struct TransferSC {
     pub scid: String,
     pub amount: u64,
-    pub payload_rpc: Vec<Argument>
+    pub payload_rpc: Vec<Argument>,
 }
 
 #[derive(Serialize)]
 pub struct Transfer {
     pub destination: String,
     pub amount: u64,
-    pub payload_rpc: Vec<Argument>
+    pub payload_rpc: Vec<Argument>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Argument {
     pub name: String,
     pub datatype: String,
-    pub value: serde_json::Value
+    pub value: serde_json::Value,
+}
+
+#[derive(Serialize)]
+pub struct GetSCParams {
+    pub scid: String,
+    pub code: bool,
+    pub keysstring: Vec<String>,
+}
+
+#[derive(Deserialize)]
+pub struct GetSCResponse {
+    pub balance: u64,
+    pub valuesstring: Vec<String>,
+    pub code: Option<String>,
+    pub status: String,
 }
 
 pub struct Provider {
     pub name: String,
     pub location: String,
-    pub public_key: String,
+    pub dero_address: String,
     pub rate: f64
 }

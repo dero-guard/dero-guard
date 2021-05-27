@@ -1,10 +1,10 @@
 use std::cell::Cell;
 
-use reqwest::{Client as HttpClient};
+use reqwest::blocking::{Client as HttpClient};
 
-use serde::{Serialize, Deserialize};
 use serde::de::DeserializeOwned;
-use serde_json::{Value, json};
+use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
 
 use failure::Fail;
 
@@ -20,7 +20,7 @@ type JsonRPCResult<T> = Result<T, JsonRPCError>;
 pub struct JsonRPCClient {
     http: HttpClient,
     target: String,
-    count: Cell<usize>
+    count: Cell<usize>,
 }
 
 impl JsonRPCClient {
@@ -28,21 +28,21 @@ impl JsonRPCClient {
         JsonRPCClient {
             http: HttpClient::new(),
             target: target.into(),
-            count: Cell::new(0)
+            count: Cell::new(0),
         }
     }
 
-    pub async fn call<R: DeserializeOwned>(&self, method: &str) -> JsonRPCResult<R> {
+    pub fn call<R: DeserializeOwned>(&self, method: &str) -> JsonRPCResult<R> {
         self.count.set(self.count.get() + 1);
 
         self.send(json!({
             "jsonrpc": JSON_RPC_VERSION,
             "method": method,
             "id": self.count.get()
-        })).await
+        }))
     }
 
-    pub async fn call_with<P, R>(&self, method: &str, params: P) -> JsonRPCResult<R>
+    pub fn call_with<P, R>(&self, method: &str, params: P) -> JsonRPCResult<R>
         where P: Serialize + Sized, R: DeserializeOwned
     {
         self.count.set(self.count.get() + 1);
@@ -52,49 +52,46 @@ impl JsonRPCClient {
             "method": method,
             "id": self.count.get(),
             "params": &params
-        })).await
+        }))
     }
 
-    pub async fn notify(&self, method: &str) -> JsonRPCResult<()> {
+    pub fn notify(&self, method: &str) -> JsonRPCResult<()> {
         self.http.post(&self.target)
             .json(&json!({
                 "jsonrpc": JSON_RPC_VERSION,
                 "method": method
             }))
-            .send()
-            .await?;
+            .send()?;
 
         Ok(())
     }
 
-    pub async fn notify_with<P>(&self, method: &str, params: P) -> JsonRPCResult<()>
+    pub fn notify_with<P>(&self, method: &str, params: P) -> JsonRPCResult<()>
         where P: Serialize + Sized
     {
-        self.http.post(&self.target)
+        self.http
+            .post(&self.target)
             .json(&json!({
                 "jsonrpc": JSON_RPC_VERSION,
                 "method": method,
                 "params": &params
             }))
-            .send()
-            .await?;
+            .send()?;
 
         Ok(())
     }
 
-    async fn send<R: DeserializeOwned>(&self, value: Value) -> JsonRPCResult<R> {
+    fn send<R: DeserializeOwned>(&self, value: Value) -> JsonRPCResult<R> {
         let mut response: Value = self.http.post(&self.target)
             .json(&value)
-            .send()
-            .await?
-            .json()
-            .await?;
+            .send()?
+            .json()?;
 
         if let Some(error) = response.get_mut("error") {
             let error: JsonRPCErrorResponse = serde_json::from_value(error.take())?;
             let data = match error.data {
                 Some(content) => Some(serde_json::to_string_pretty(&content)?),
-                None => None
+                None => None,
             };
 
             return Err(match error.code {
@@ -104,18 +101,21 @@ impl JsonRPCClient {
                 INVALID_PARAMS_CODE => JsonRPCError::InvalidParams,
                 INTERNAL_ERROR_CODE => JsonRPCError::InternalError {
                     message: error.message.clone(),
-                    data
+                    data,
                 },
                 code => JsonRPCError::ServerError {
                     code,
                     message: error.message.clone(),
-                    data
-                }
+                    data,
+                },
             });
         }
 
         Ok(serde_json::from_value(
-            response.get_mut("result").ok_or(JsonRPCError::MissingResult)?.take()
+            response
+                .get_mut("result")
+                .ok_or(JsonRPCError::MissingResult)?
+                .take(),
         )?)
     }
 }
@@ -125,7 +125,7 @@ struct JsonRPCErrorResponse {
     code: i16,
     message: String,
     #[serde(default)]
-    data: Option<Value>
+    data: Option<Value>,
 }
 
 #[derive(Debug, Fail)]
@@ -145,43 +145,34 @@ pub enum JsonRPCError {
     #[fail(display = "Server internal JSON-RPC error: {}", message)]
     InternalError {
         message: String,
-        data: Option<String>
+        data: Option<String>,
     },
 
     #[fail(display = "Server returned error: [{}] {}", code, message)]
     ServerError {
         code: i16,
         message: String,
-        data: Option<String>
+        data: Option<String>,
     },
-
 
     #[fail(display = "Server returned a response without result")]
     MissingResult,
 
     #[fail(display = "Error while (de)serializing JSON data: {}", inner)]
-    SerializationError {
-        inner: serde_json::Error
-    },
+    SerializationError { inner: serde_json::Error },
 
     #[fail(display = "HTTP error during JSON-RPC communication: {}", inner)]
-    HttpError {
-        inner: reqwest::Error
-    }
+    HttpError { inner: reqwest::Error },
 }
 
 impl From<reqwest::Error> for JsonRPCError {
     fn from(err: reqwest::Error) -> Self {
-        JsonRPCError::HttpError {
-            inner: err
-        }
+        JsonRPCError::HttpError { inner: err }
     }
 }
 
 impl From<serde_json::Error> for JsonRPCError {
     fn from(err: serde_json::Error) -> Self {
-        JsonRPCError::SerializationError {
-            inner: err
-        }
+        JsonRPCError::SerializationError { inner: err }
     }
 }

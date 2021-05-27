@@ -1,13 +1,13 @@
 use std::fs::OpenOptions;
 use std::io::Write;
 
-use dero_guard::wg::*;
 use dero_guard::command::execute;
+use dero_guard::wg::*;
 
 const PORT: u16 = 23500;
 
 pub struct VPN {
-    config: WireguardConfig
+    config: WireguardConfig,
 }
 
 pub type VPNError = WireguardError;
@@ -18,8 +18,8 @@ impl VPN {
             config: WireguardConfig {
                 keys: load_keys()?,
                 listen_port: PORT,
-                peers: Vec::new()
-            }
+                peers: Vec::new(),
+            },
         })
     }
 
@@ -32,7 +32,7 @@ impl VPN {
         public_key: String,
         address: String,
         port: u16,
-        local_address: String
+        local_address: String,
     ) -> Result<(), VPNError> {
         let keys = load_keys()?;
         /*setup_interface(&local_address)?;
@@ -40,7 +40,7 @@ impl VPN {
         self.config.peers.push(WireguardPeer {
             public_key,
             allowed_ips: "0.0.0.0/0".into(),
-            endpoint: Some(format!("{}:{}", address, port))
+            endpoint: Some(format!("{}:{}", address, port)),
         });
 
         apply_configuration(&self.config)?;
@@ -71,7 +71,10 @@ AllowedIPs = 0.0.0.0/0", keys.private_key, local_address, public_key, address, p
         // execute(vec!["wg", "setconf", DEVICE_NAME, &format!("{}", file.display())])?;
         execute(vec!["wg-quick", "up", file.to_str().unwrap()])?;
 
-        println!(" - Connected to '{}:{}', local address is '{}'", address, port, local_address);
+        println!(
+            " - Connected to '{}:{}', local address is '{}'",
+            address, port, local_address
+        );
 
         Ok(())
     }
@@ -95,9 +98,7 @@ AllowedIPs = 0.0.0.0/0", keys.private_key, local_address, public_key, address, p
 
 fn edit_route(address: &str, action: &str) -> Result<(), VPNError> {
     let route = execute(vec!["ip", "route", "get", &address])?;
-    let route = route
-        .split(" ")
-        .collect::<Vec<&str>>();
+    let route = route.split(" ").collect::<Vec<&str>>();
 
     execute(vec!["ip", "route", action, route[0], route[1], route[2]])?;
     execute(vec!["ip", "route", action, "0/1", "dev", DEVICE_NAME])?;

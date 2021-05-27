@@ -1,8 +1,8 @@
 use std::sync::Mutex;
 
-use neon::prelude::*;
 use lazy_static::lazy_static;
 // use tokio::runtime::Runtime;
+use neon::prelude::*;
 
 mod service;
 mod vpn;
@@ -11,9 +11,9 @@ use service::Service;
 use vpn::VPN;
 
 lazy_static! {
-    static ref SERVICE: Mutex<Service> = Mutex::new(futures::executor::block_on(
+    static ref SERVICE: Mutex<Service> = Mutex::new(
         service::Service::new("http://127.0.0.1:40404/json_rpc", VPN::new().unwrap())
-    ).unwrap());
+    .unwrap());
 
     // static ref RUNTIME: Runtime = Runtime::new().unwrap();
 }
@@ -25,17 +25,18 @@ fn providers(mut cx: FunctionContext) -> JsResult<JsArray> {
     let providers = service.get_providers();
 
     for (i, provider) in providers.into_iter().enumerate() {
+        //TODO fix into_iter from async func
         let object = JsObject::new(&mut cx);
 
         let location = cx.string(&provider.location);
         let name = cx.string(&provider.name);
         let rate = cx.number(provider.rate);
-        let public_key = cx.string(&provider.public_key);
+        let dero_address = cx.string(&provider.dero_address);
 
         object.set(&mut cx, "location", location)?;
         object.set(&mut cx, "name", name)?;
         object.set(&mut cx, "rate", rate)?;
-        object.set(&mut cx, "public_key", public_key)?;
+        object.set(&mut cx, "dero_address", dero_address)?;
 
         js_array.set(&mut cx, i as u32, object)?;
     }
@@ -43,10 +44,10 @@ fn providers(mut cx: FunctionContext) -> JsResult<JsArray> {
     Ok(js_array)
 }
 
-fn refill(mut cx: FunctionContext) -> JsResult<JsString> {
+fn refill(mut cx: FunctionContext) -> JsResult<JsObject> {
     let mut service = SERVICE.lock().unwrap();
 
-    let public_key = cx.argument::<JsString>(0)?.value(&mut cx);
+    let dero_address = cx.argument::<JsString>(0)?.value(&mut cx);
     let amount = cx.argument::<JsNumber>(1)?.value(&mut cx);
 
     // let cb = cx.argument::<JsFunction>(2)?.root(&mut cx);
@@ -56,10 +57,16 @@ fn refill(mut cx: FunctionContext) -> JsResult<JsString> {
         let address = cx.string(result);
         address.
     });*/
-    let result = futures::executor::block_on(service.connect(public_key, (amount * 100000f64) as u64)).unwrap();
-    let address = cx.string(result);
+    let (addr, key) = service.connect(dero_address, (amount * 100000f64) as u64).unwrap();
 
-    Ok(address)
+    let object = JsObject::new(&mut cx);
+    let address = cx.string(addr);
+    let public_key = cx.string(key);
+
+    object.set(&mut cx, "address", address)?;
+    object.set(&mut cx,"public_key", public_key)?;
+
+    Ok(object)
     //Ok(cx.undefined())
 }
 

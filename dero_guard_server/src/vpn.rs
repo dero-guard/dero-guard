@@ -1,16 +1,16 @@
-use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
+use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 
-use dero_guard::wg::*;
 use dero_guard::command::execute;
+use dero_guard::wg::*;
 
 const BASE_ADDRESS: &str = "10.0.0";
 const LOCAL_ADDRESS: &str = "10.0.0.1/24";
 const SOURCE_ADDRESS: &str = "10.0.0.0/24";
 const ADDRESS_MASK: &str = "24";
 const OUTPUT_INTERFACE: &str = "eth0";
-const PORT: u16 = 50000;//22350;
+const PORT: u16 = 50000; //22350;
 
 pub struct VPN {
     config: WireguardConfig,
@@ -18,14 +18,14 @@ pub struct VPN {
     rate: Decimal,
 
     clients: Vec<Client>,
-    next_ip: u8
+    next_ip: u8,
 }
 
 pub struct Client {
     public_key: String,
     balance: u64,
     last_download: u64,
-    last_upload: u64
+    last_upload: u64,
 }
 
 pub type VPNError = WireguardError;
@@ -38,7 +38,7 @@ impl VPN {
         let config = WireguardConfig {
             keys: load_keys()?,
             listen_port: PORT,
-            peers: Vec::new()
+            peers: Vec::new(),
         };
         apply_configuration(&config)?;
 
@@ -48,7 +48,7 @@ impl VPN {
             rate,
 
             clients: Vec::new(),
-            next_ip: 2
+            next_ip: 2,
         })
     }
 
@@ -79,13 +79,16 @@ impl VPN {
                 public_key: public_key.clone(),
                 balance: 0,
                 last_download: 0,
-                last_upload: 0
+                last_upload: 0,
             });
             self.find_client(&public_key).unwrap()
         };
 
         let amount = Decimal::from(paid) / dec!(100000) * rate;
-        println!(" - Client '{}' paid {} $DERO to add {} GB to its balance", public_key, paid, amount);
+        println!(
+            " - Client '{}' paid {} $DERO to add {} GB to its balance",
+            public_key, paid, amount
+        );
 
         client.balance += amount.to_u64().unwrap();
 
@@ -106,33 +109,47 @@ impl VPN {
         self.config.peers.push(WireguardPeer {
             public_key: public_key.clone(),
             allowed_ips: address.clone(),
-            endpoint: None
+            endpoint: None,
         });
 
         apply_configuration(&self.config)?;
 
-        println!(" - Client '{}' ('{}') ready for connection", public_key, address);
+        println!(
+            " - Client '{}' ('{}') ready for connection",
+            public_key, address
+        );
 
         Ok(address)
     }
 
     fn find_client(&mut self, public_key: &String) -> Option<&mut Client> {
-        self.clients.iter_mut().find(|c| c.public_key == *public_key)
+        self.clients
+            .iter_mut()
+            .find(|c| c.public_key == *public_key)
     }
 
     fn find_peer(&self, public_key: &String) -> Option<&WireguardPeer> {
-        self.config.peers.iter().find(|p| p.public_key == *public_key)
+        self.config
+            .peers
+            .iter()
+            .find(|p| p.public_key == *public_key)
     }
 
     fn remove_peer(&mut self, public_key: &String) -> Result<bool, VPNError> {
         let peers = &mut self.config.peers;
-        let index = peers.iter().enumerate().find(|(_, p)| p.public_key == *public_key);
+        let index = peers
+            .iter()
+            .enumerate()
+            .find(|(_, p)| p.public_key == *public_key);
 
         if let Some((index, _)) = index {
             let removed = peers.remove(index);
             apply_configuration(&self.config)?;
 
-            println!(" - Disconnected client '{}' ('{}')", removed.public_key, removed.allowed_ips);
+            println!(
+                " - Disconnected client '{}' ('{}')",
+                removed.public_key, removed.allowed_ips
+            );
 
             Ok(true)
         } else {
@@ -145,7 +162,8 @@ impl VPN {
 
         for client in &mut self.clients {
             let bandwidth = get_bandwidth(&client.public_key)?;
-            let diff = (bandwidth.download - client.last_download) + (bandwidth.upload - client.last_upload);
+            let diff = (bandwidth.download - client.last_download)
+                + (bandwidth.upload - client.last_upload);
 
             if client.balance <= diff {
                 client.balance = 0;
@@ -182,11 +200,16 @@ pub fn flush() -> Result<(), VPNError> {
 fn apply_nat(method: &str) -> Result<(), VPNError> {
     execute(vec![
         "iptables",
-        "-t", "nat",
-        method, "POSTROUTING",
-        "-s", SOURCE_ADDRESS,
-        "-o", OUTPUT_INTERFACE,
-        "-j", "MASQUERADE"
+        "-t",
+        "nat",
+        method,
+        "POSTROUTING",
+        "-s",
+        SOURCE_ADDRESS,
+        "-o",
+        OUTPUT_INTERFACE,
+        "-j",
+        "MASQUERADE",
     ])?;
 
     Ok(())
