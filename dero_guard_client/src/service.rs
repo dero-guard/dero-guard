@@ -155,20 +155,21 @@ impl Service {
             )
         {
             Ok(res) => res,
-            Err(err) => panic!(err),
+            Err(err) => panic!("{}", err),
         };
 
         let total = match res.valuesstring.remove(0).parse::<u64>() {
             Ok(v) => v,
-            Err(e) => panic!(e),
+            Err(e) => panic!("{}", e),
         };
         let mut providers = vec![];
-        let i = 0;
+        let mut i = 0;
         while i < total {
             providers.push(match self.get_provider(i) {
                 Ok(v) => v,
-                Err(err) => panic!(err),
+                Err(err) => panic!("{}", err),
             });
+            i = i + 1;
         }
 
         providers
