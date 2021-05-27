@@ -1,3 +1,7 @@
+use rust_decimal::Decimal;
+use rust_decimal::prelude::ToPrimitive;
+use rust_decimal_macros::dec;
+
 use dero_guard::wg::*;
 use dero_guard::command::execute;
 
@@ -10,13 +14,24 @@ const PORT: u16 = 50000;//22350;
 
 pub struct VPN {
     config: WireguardConfig,
+    address: String,
+    rate: Decimal,
+
+    clients: Vec<Client>,
     next_ip: u8
+}
+
+pub struct Client {
+    public_key: String,
+    balance: u64,
+    last_download: u64,
+    last_upload: u64
 }
 
 pub type VPNError = WireguardError;
 
 impl VPN {
-    pub fn new() -> Result<VPN, VPNError> {
+    pub fn new(address: &str, rate: Decimal) -> Result<VPN, VPNError> {
         setup_interface(LOCAL_ADDRESS)?;
         apply_nat("-A")?;
 
@@ -27,22 +42,64 @@ impl VPN {
         };
         apply_configuration(&config)?;
 
-        Ok(VPN { config, next_ip: 2 })
+        Ok(VPN {
+            config,
+            address: address.into(),
+            rate,
+
+            clients: Vec::new(),
+            next_ip: 2
+        })
     }
 
     pub fn get_public_key(&self) -> &str {
         &self.config.keys.public_key
     }
 
-    pub fn get_address(&self) -> String {
-        std::env::args().collect::<Vec<String>>().remove(1)
+    pub fn get_address(&self) -> &str {
+        &self.address
+    }
+
+    pub fn get_rate(&self) -> Decimal {
+        self.rate
     }
 
     pub fn get_port(&self) -> u16 {
         self.config.listen_port
     }
 
-    pub fn add_client(&mut self, public_key: String) -> Result<String, VPNError> {
+    pub fn refill_client(&mut self, public_key: String, paid: u64) -> Result<String, VPNError> {
+        let rate = self.rate;
+        let client = if let Some(client) = self.find_client(&public_key) {
+            client
+        } else {
+            println!(" - Registering new client '{}'", public_key);
+
+            self.clients.push(Client {
+                public_key: public_key.clone(),
+                balance: 0,
+                last_download: 0,
+                last_upload: 0
+            });
+            self.find_client(&public_key).unwrap()
+        };
+
+        let amount = Decimal::from(paid) / dec!(1000000000000) * rate;
+        println!(" - Client '{}' paid {} $DERO to add {} GB to its balance", public_key, paid, amount);
+
+        client.balance += amount.to_u64().unwrap();
+
+        let peer = if let Some(peer) = self.find_peer(&public_key) {
+            peer
+        } else {
+            println!(" - Adding client '{}' to peers", public_key);
+            return self.register_peer(public_key);
+        };
+
+        Ok(peer.allowed_ips.clone())
+    }
+
+    fn register_peer(&mut self, public_key: String) -> Result<String, VPNError> {
         let address = format!("{}.{}/{}", BASE_ADDRESS, self.next_ip, ADDRESS_MASK);
 
         self.next_ip += 1;
@@ -59,9 +116,17 @@ impl VPN {
         Ok(address)
     }
 
-    pub fn remove_client(&mut self, public_key: String) -> Result<bool, VPNError> {
+    fn find_client(&mut self, public_key: &String) -> Option<&mut Client> {
+        self.clients.iter_mut().find(|c| c.public_key == *public_key)
+    }
+
+    fn find_peer(&self, public_key: &String) -> Option<&WireguardPeer> {
+        self.config.peers.iter().find(|p| p.public_key == *public_key)
+    }
+
+    fn remove_peer(&mut self, public_key: &String) -> Result<bool, VPNError> {
         let peers = &mut self.config.peers;
-        let index = peers.iter().enumerate().find(|(_, p)| p.public_key == public_key);
+        let index = peers.iter().enumerate().find(|(_, p)| p.public_key == *public_key);
 
         if let Some((index, _)) = index {
             let removed = peers.remove(index);
@@ -73,6 +138,35 @@ impl VPN {
         } else {
             Ok(false)
         }
+    }
+
+    pub fn update(&mut self) -> Result<(), VPNError> {
+        let mut to_remove = Vec::<String>::new();
+
+        for client in &mut self.clients {
+            let bandwidth = get_bandwidth(&client.public_key)?;
+            let diff = (bandwidth.download - client.last_download) + (bandwidth.upload - client.last_upload);
+
+            if client.balance <= diff {
+                client.balance = 0;
+                client.last_download = 0;
+                client.last_upload = 0;
+
+                to_remove.push(client.public_key.clone());
+
+                println!(" - Client '{}' balance is now empty", client.public_key);
+            } else {
+                client.balance -= diff;
+                client.last_download = bandwidth.download;
+                client.last_upload = bandwidth.upload;
+            }
+        }
+
+        for key in to_remove {
+            self.remove_peer(&key)?;
+        }
+
+        Ok(())
     }
 }
 

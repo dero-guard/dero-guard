@@ -32,6 +32,10 @@ impl Service {
     pub async fn run(&mut self) -> Result<(), Error> {
         println!("Running Service!");
         loop {
+            if let Err(err) = self.vpn.update() {
+                eprintln!("Error during VPN update: {}", err);
+            }
+
             let height = self.parent.get_height().await?.height;
             if self.block_height < height {
                 self.block_height = height;
@@ -44,7 +48,7 @@ impl Service {
     
                             if let Some(pk) = opt_pkey {
                                 println!("Adding user to VPN server!");
-                                let local_address = self.vpn.add_client(pk)?;
+                                let local_address = self.vpn.refill_client(pk, entry.amount)?;
                                 let result = self.parent.send_tx(Transfer {
                                     destination: entry.sender,
                                     amount: 1,
@@ -57,7 +61,7 @@ impl Service {
                                         Argument {
                                             name: "IP".into(),
                                             datatype: "S".into(),
-                                            value: Value::String(self.vpn.get_address()),
+                                            value: Value::String(self.vpn.get_address().into()),
                                         },
                                         Argument {
                                             name: "PO".into(),
