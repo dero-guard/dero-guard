@@ -10,18 +10,24 @@ mod vpn;
 
 use service::Service;
 use vpn::{flush, VPN};
+use dero_guard::{setup_logger, log};
 
 fn main() {
+    if let Err(e) = setup_logger(true, true) {
+        eprintln!("Error while initializing logger: {}", e);
+        return;
+    }
+
     if std::env::args().find(|a| a == "--flush").is_some() {
         if let Err(e) = flush() {
-            eprintln!("Error while flushing devices: {}", e);
+            log::error!("Error while flushing devices: {}", e);
         }
 
         return;
     }
 
     if std::env::args().len() < 3 {
-        println!("Usage: dero_guard_server (<public_ip_address> <rate> | --flush)");
+        log::error!("Usage: dero_guard_server (<public_ip_address> <rate> | --flush)");
         return;
     }
 
@@ -31,18 +37,18 @@ fn main() {
 
     if let Ok(rate) = Decimal::from_str(rate.as_str()) {
         if rate < dec!(0.00000001) {
-            eprintln!("'{}' is too small", rate);
+            log::error!("'{}' is too small", rate);
             return;
         }
 
-        println!("Public I.P. address: {}", address);
-        println!("Rate: 1GB = {} $DERO\n", rate);
+        log::info!("Public I.P. address: {}", address);
+        log::info!("Rate: 1GB = {} $DERO\n", rate);
 
         if let Err(error) = start_service(address, rate) {
-            eprintln!("Error during Service initialization: {}", error);
+            log::error!("Error during Service initialization: {}", error);
         }
     } else {
-        eprintln!("'{}' is not a valid floating point number", rate);
+        log::error!("'{}' is not a valid floating point number", rate);
     }
 }
 

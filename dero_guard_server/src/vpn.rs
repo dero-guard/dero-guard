@@ -4,6 +4,7 @@ use rust_decimal_macros::dec;
 
 use dero_guard::command::execute;
 use dero_guard::wg::*;
+use dero_guard::log;
 
 const BASE_ADDRESS: &str = "10.0.0";
 const LOCAL_ADDRESS: &str = "10.0.0.1/24";
@@ -73,7 +74,7 @@ impl VPN {
         let client = if let Some(client) = self.find_client(&public_key) {
             client
         } else {
-            println!(" - Registering new client '{}'", public_key);
+            log::debug!("Registering new client '{}'", public_key);
 
             self.clients.push(Client {
                 public_key: public_key.clone(),
@@ -86,8 +87,8 @@ impl VPN {
 
         let paid = Decimal::from(paid) / dec!(100000);
         let amount = paid / rate;
-        println!(
-            " - Client '{}' paid {} $DERO to add {} GB to its balance",
+        log::info!(
+            "Client '{}' paid {} $DERO to add {} GB to its balance",
             public_key, paid, amount
         );
 
@@ -96,7 +97,7 @@ impl VPN {
         let peer = if let Some(peer) = self.find_peer(&public_key) {
             peer
         } else {
-            println!(" - Adding client '{}' to peers", public_key);
+            log::debug!("Adding client '{}' to peers", public_key);
             return self.register_peer(public_key);
         };
 
@@ -115,8 +116,8 @@ impl VPN {
 
         apply_configuration(&self.config)?;
 
-        println!(
-            " - Client '{}' ('{}') ready for connection",
+        log::info!(
+            "Client '{}' ('{}') ready for connection",
             public_key, address
         );
 
@@ -147,8 +148,8 @@ impl VPN {
             let removed = peers.remove(index);
             apply_configuration(&self.config)?;
 
-            println!(
-                " - Disconnected client '{}' ('{}')",
+            log::info!(
+                "Disconnected client '{}' ('{}')",
                 removed.public_key, removed.allowed_ips
             );
 
@@ -166,8 +167,8 @@ impl VPN {
             let diff = (bandwidth.download - client.last_download)
                 + (bandwidth.upload - client.last_upload);
 
-            println!(" - Client '{}' balance -= {}", client.public_key, diff);
-            println!("   Balance is now '{}'", client.balance);
+            log::debug!("Client '{}' balance -= {}", client.public_key, diff);
+            log::debug!("Balance is now '{}'", client.balance);
 
             if client.balance <= diff {
                 client.balance = 0;
@@ -176,7 +177,7 @@ impl VPN {
 
                 to_remove.push(client.public_key.clone());
 
-                println!(" - Client '{}' balance is now empty", client.public_key);
+                log::debug!("Client '{}' balance is now empty", client.public_key);
             } else {
                 client.balance -= diff;
                 client.last_download = bandwidth.download;
@@ -196,7 +197,7 @@ pub fn flush() -> Result<(), VPNError> {
     apply_nat("-D")?;
     remove_interface()?;
 
-    println!(" - Flushed");
+    log::info!("Flushed");
 
     Ok(())
 }
