@@ -8,14 +8,10 @@ pub struct CommonService {
 }
 
 impl CommonService {
-    pub fn new(client: JsonRPCClient) -> Result<CommonService, JsonRPCError> {
-        let service = CommonService {
+    pub fn new(client: JsonRPCClient) -> Self {
+        Self {
             client
-        };
-
-        service.get_height()?;
-
-        Ok(service)
+        }
     }
 
     pub fn get_payload_value(&self, name: &str, elements: &Vec<Argument>) -> Option<String> {

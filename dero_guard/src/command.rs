@@ -1,6 +1,6 @@
 use std::io::{Error as IoError, Write};
 use std::process::{Command, Stdio};
-
+use log::{debug, error};
 use failure::Fail;
 
 pub fn execute(line: Vec<&str>) -> Result<String, ExecutionError> {
@@ -10,7 +10,7 @@ pub fn execute(line: Vec<&str>) -> Result<String, ExecutionError> {
 pub fn execute_with(line: Vec<&str>, input: &str) -> Result<String, ExecutionError> {
     use ExecutionError::*;
 
-    println!("   > {}", line.join(" "));
+    debug!("   > {}", line.join(" "));
 
     let mut process = Command::new(line.get(0).ok_or(EmptyLine)?)
         .args(&line[1..])
@@ -31,7 +31,7 @@ pub fn execute_with(line: Vec<&str>, input: &str) -> Result<String, ExecutionErr
 
     let stderr = read_output(stderr)?;
     if !stderr.is_empty() {
-        eprintln!("     /!\\ {}", stderr.trim());
+        error!("     /!\\ {}", stderr.trim());
     }
 
     Ok(read_output(stdout)?.trim().to_string())

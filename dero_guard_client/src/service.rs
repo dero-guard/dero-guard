@@ -2,6 +2,7 @@ use dero_guard::dero::*;
 use dero_guard::json_rpc::{JsonRPCClient, JsonRPCError};
 use dero_guard::service::CommonService;
 use dero_guard::wg::{get_bandwidth, BandwidthUsage};
+use dero_guard::{SCID, log};
 
 use crate::vpn::*;
 use failure::Error;
@@ -14,7 +15,6 @@ pub struct Service {
     daemon_rpc: JsonRPCClient,
     vpn: VPN,
     block_height: u64,
-
     connected: Option<(String, String)>
 }
 
@@ -22,9 +22,9 @@ impl Service {
     pub fn new(target: &str, vpn: VPN) -> Result<Service, JsonRPCError> {
         let client = JsonRPCClient::new(target);
         let mut service = Service {
-            parent: CommonService::new(client)?,
+            parent: CommonService::new(client),
             vpn,
-            daemon_rpc: JsonRPCClient::new("http://127.0.0.1:40402/json_rpc"), //TODO Config
+            daemon_rpc: JsonRPCClient::new("http://127.0.0.1:40402/json_rpc"), // TODO Config
             block_height: 0,
 
             connected: None
@@ -48,7 +48,7 @@ impl Service {
             ],
         };
 
-        println!("sending TX for registration");
+        log::debug!("sending TX for registration");
         self.parent.send_tx(param)?;
 
         if let Some(remote) = &self.connected {
@@ -63,7 +63,7 @@ impl Service {
                 if let Ok(value) = self.parent.get_txs(GetTransfersParams { _in: true, min_height: height, }) {
                     for entry in value.entries {
                         if entry.payload_rpc.len() == 4 {
-                            println!("Found entry with 4 payload!");
+                            log::debug!("Found entry with 4 payload!");
                             let opt_pkey = self.parent.get_payload_value("PK", &entry.payload_rpc);
                             let opt_ip = self.parent.get_payload_value("IP", &entry.payload_rpc);
                             let opt_port = self
@@ -76,18 +76,17 @@ impl Service {
                                 && opt_port.is_some()
                                 && opt_local.is_some()
                             {
-                                println!("Connecting to VPN...");
+                                log::info!("Trying to connect to VPN...");
+
                                 let address = opt_ip.unwrap();
                                 let public_key = opt_pkey.unwrap();
                                 self.vpn.connect(public_key.clone(), address.clone(), opt_port.unwrap(), opt_local.unwrap())?;
-
                                 self.connected = Some((address, public_key));
                             }
                         }
                     }
                 }
             }
-
             thread::sleep(Duration::from_secs(1));
         }
 
@@ -113,19 +112,17 @@ impl Service {
                 "getsc",
                 GetSCParams {
                     code: false,
-                    scid: String::from(
-                        "e48de7a8cb79a71a60ed75121fc28a972dfe964be85942f9570837996eb5f5ed",
-                    ),
+                    scid: SCID.to_owned(),
                     keysstring: vec![
-                        format!("provider_{}_price", id),
-                        format!("provider_{}_name", id),
-                        format!("provider_{}_country", id),
-                        format!("provider_{}_address", id),
+                        format!("{}:p", id),
+                        format!("{}:n", id),
+                        format!("{}:c", id),
+                        format!("{}:a", id),
                     ],
                 },
             )?;
 
-        let rate = (res.valuesstring.remove(0).parse::<u64>()? / 10 ^ 5) as f64; //TODO
+        let rate = (res.valuesstring.remove(0).parse::<u64>()? / 10 ^ 5) as f64;
         let name = res.valuesstring.remove(0);
         let location = res.valuesstring.remove(0);
         let dero_address = res.valuesstring.remove(0);
@@ -138,6 +135,7 @@ impl Service {
         })
     }
 
+    // get all registered providers from Smart Contract
     pub fn get_providers(&self) -> Vec<Provider> {
         let mut res: GetSCResponse = match self
             .daemon_rpc
@@ -145,9 +143,7 @@ impl Service {
                 "getsc",
                 GetSCParams {
                     code: false,
-                    scid: String::from(
-                        "e48de7a8cb79a71a60ed75121fc28a972dfe964be85942f9570837996eb5f5ed",
-                    ), //TODO Config
+                    scid: SCID.to_owned(),
                     keysstring: vec![String::from("total")],
                 },
             )

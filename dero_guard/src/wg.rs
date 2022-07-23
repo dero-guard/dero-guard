@@ -2,7 +2,7 @@ use std::fs::{File, OpenOptions};
 use std::io::{Error as IoError, Read, Write};
 use std::os::unix::fs::OpenOptionsExt;
 use std::path::PathBuf;
-
+use log::debug;
 use failure::Fail;
 
 use crate::command::{execute, execute_with, ExecutionError};
@@ -36,7 +36,7 @@ pub struct BandwidthUsage {
 pub fn load_keys() -> Result<WireguardKeys, WireguardError> {
     let private_key = get_folder()?.join("private_key");
     let private_key = if !private_key.exists() {
-        println!(" - Generating private key at '{:?}'", private_key);
+        debug!("Generating private key at '{:?}'", private_key);
 
         let key = execute(vec!["wg", "genkey"])?;
         let mut file = OpenOptions::new()
@@ -49,7 +49,7 @@ pub fn load_keys() -> Result<WireguardKeys, WireguardError> {
 
         key
     } else {
-        println!(" - Found private key at '{:?}'", private_key);
+        debug!("Found private key at '{:?}'", private_key);
 
         let mut file = File::open(&private_key)?;
         let mut key = String::new();
@@ -60,7 +60,7 @@ pub fn load_keys() -> Result<WireguardKeys, WireguardError> {
     };
 
     let public_key = execute_with(vec!["wg", "pubkey"], &private_key)?;
-    println!(" - Using public key '{}'", public_key);
+    debug!("Using public key '{}'", public_key);
 
     Ok(WireguardKeys {
         private_key,
@@ -83,7 +83,7 @@ pub fn setup_interface(address: &str) -> Result<(), WireguardError> {
     execute(vec!["ip", "address", "add", "dev", DEVICE_NAME, address])?;
     execute(vec!["ip", "link", "set", "up", "dev", DEVICE_NAME])?;
 
-    println!(" - Set up interface with local address '{}'", address);
+    debug!("Set up interface with local address '{}'", address);
 
     Ok(())
 }
@@ -126,7 +126,7 @@ PersistentKeepalive = 25",
 
     config.write_all(result.as_bytes())?;
 
-    println!(" - Generated wireguard configuration at '{:?}'", file);
+    debug!("Generated wireguard configuration at '{:?}'", file);
 
     execute(vec![
         "wg",

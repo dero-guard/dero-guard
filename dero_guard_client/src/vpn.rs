@@ -3,6 +3,7 @@ use std::io::Write;
 
 use dero_guard::command::execute;
 use dero_guard::wg::*;
+use dero_guard::log;
 
 const PORT: u16 = 23500;
 
@@ -46,7 +47,7 @@ impl VPN {
         apply_configuration(&self.config)?;
         edit_route(&address, "add")?;*/
 
-        let mut result = format!("\
+        let result = format!("\
 [Interface]
 PrivateKey = {}
 Address = {}
@@ -66,20 +67,20 @@ AllowedIPs = 0.0.0.0/0", keys.private_key, local_address, public_key, address, p
 
         config.write_all(result.as_bytes())?;
 
-        println!(" - Generated wireguard configuration at '{:?}'", file);
+        log::info!("Generated wireguard configuration at '{:?}'", file);
 
         // execute(vec!["wg", "setconf", DEVICE_NAME, &format!("{}", file.display())])?;
         execute(vec!["wg-quick", "up", file.to_str().unwrap()])?;
 
-        println!(
-            " - Connected to '{}:{}', local address is '{}'",
+        log::info!(
+            "Connected to '{}:{}', local address is '{}'",
             address, port, local_address
         );
 
         Ok(())
     }
 
-    pub fn disconnect(&mut self, address: &str) -> Result<(), VPNError> {
+    pub fn disconnect(&mut self, _: &str) -> Result<(), VPNError> {
         while self.config.peers.len() > 0 {
             self.config.peers.remove(0);
         }
@@ -90,7 +91,7 @@ AllowedIPs = 0.0.0.0/0", keys.private_key, local_address, public_key, address, p
         let file = get_folder()?.join("generated.conf");
         execute(vec!["wg-quick", "down", file.to_str().unwrap()])?;
 
-        println!(" - Disconnected");
+        log::info!("Disconnected");
 
         Ok(())
     }
