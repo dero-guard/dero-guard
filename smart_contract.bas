@@ -25,10 +25,11 @@ Function Register(price Uint64, name String, country String) Uint64
 11 STORE(current + ":n", name)
 12 STORE(current + ":c", country)
 13 STORE(current + ":a", SIGNER())
-14 STORE(addr, current) // save current ID for this address
-15 IF exist THEN GOTO 30
-20 STORE("total", current + 1)
-30 RETURN 0
+14 STORE(current + ":rt", 0) // total rate
+15 STORE(addr, current) // save current ID for this address
+16 IF exist THEN GOTO 30
+17 STORE("total", current + 1)
+18 RETURN 0
 End Function
 
 // A provider can update his data on the SC
@@ -44,12 +45,15 @@ End Function
 
 // Allows anyone to rate a provider.
 Function Note(value Uint64, provider Uint64) Uint64
-10 IF value > 0 AND value < 5 THEN GOTO 12
-11 RETURN 1
-12 IF EXISTS(provider + ":p") THEN GOTO 15
-13 RETURN 1
-15 STORE(provider + ":r:" + SIGNER(), value)
-30 RETURN 0
+1 IF value < 1 AND value > 5 THEN RETURN 1
+2 IF !EXISTS(provider + ":rt") THEN RETURN 1
+3 DIM id as Uint64
+4 LET id = LOAD(provider + ":rt")
+5 IF EXISTS(provider + ":r:" + SIGNER()) THEN RETURN 1 // can only rate one-time (TODO)
+6 STORE(provider + ":r:" + SIGNER(), id) // keep history
+7 STORE(provider + ":r:" + id, value) // score
+8 STORE(provider + ":rt", id + 1)
+9 RETURN 0
 End Function
 
 // admin entrypoint to update SC code for any update
