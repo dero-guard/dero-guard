@@ -10,6 +10,7 @@ use service::Service;
 use vpn::VPN;
 
 const DEFAULT_DAEMON_ADDRESS: &str = "127.0.0.1:40402";
+const DEFAULT_WALLET_ADDRESS: &str = "127.0.0.1:40403";
 
 #[derive(Parser)]
 pub struct Config {
@@ -24,7 +25,10 @@ pub struct Config {
     disconnect: Option<String>,
     /// DERO daemon address
     #[clap(short = 'a', long, default_value_t = String::from(DEFAULT_DAEMON_ADDRESS))]
-    daemon_address: String
+    daemon_address: String,
+    /// DERO wallet address
+    #[clap(short = 'w', long, default_value_t = String::from(DEFAULT_WALLET_ADDRESS))]
+    wallet_address: String
 }
 
 fn main() {
@@ -47,7 +51,7 @@ fn start_service(config: Config) -> Result<(), Error> {
         return Ok(())
     }
 
-    let mut service = Service::new(&format!("http://{}/json_rpc", config.daemon_address), vpn)?;
+    let mut service = Service::new(&format!("http://{}/json_rpc", config.wallet_address), &format!("http://{}/json_rpc", config.daemon_address), vpn)?;
     let mut providers = service.get_providers();
     log::info!("Please select one of next providers ({}):", providers.len());
     log::info!("{0: <10} | {1: <10} | {2: <10} | {3: <10} | {4: <10}", "Id", "Name", "Location", "Price", "Address");

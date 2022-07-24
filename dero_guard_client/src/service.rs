@@ -19,12 +19,12 @@ pub struct Service {
 }
 
 impl Service {
-    pub fn new(target: &str, vpn: VPN) -> Result<Service, JsonRPCError> {
-        let client = JsonRPCClient::new(target);
+    pub fn new(wallet_address: &str, daemon_address: &str, vpn: VPN) -> Result<Service, JsonRPCError> {
+        let client = JsonRPCClient::new(wallet_address);
         let mut service = Service {
             parent: CommonService::new(client),
             vpn,
-            daemon_rpc: JsonRPCClient::new(target),
+            daemon_rpc: JsonRPCClient::new(daemon_address),
             block_height: 0,
             connected: None
         };
@@ -49,7 +49,6 @@ impl Service {
 
         log::debug!("sending TX for registration");
         self.parent.send_tx(param)?;
-
         if let Some(remote) = &self.connected {
             return Ok(remote.clone());
         }

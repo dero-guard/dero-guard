@@ -10,7 +10,7 @@ pub mod json_rpc;
 pub mod service;
 pub mod wg;
 
-pub const SCID: &str = "b0b6eff653ef41ea5a73e7f0ee24833a930969a93ea91664e06a828d1be60997";
+pub const SCID: &str = "829b3727fe7d23f425d9897dcd1ad97e4318f5d79995296f9f6814e9bc4dfcc8";
 
 // configure fern and print prompt message after each new output
 pub fn setup_logger(debug: bool, disable_file_logging: bool) -> Result<(), fern::InitError> {

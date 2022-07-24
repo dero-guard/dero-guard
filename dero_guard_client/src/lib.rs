@@ -13,7 +13,7 @@ use dero_guard::wg::BandwidthUsage;
 
 lazy_static! {
     static ref SERVICE: Mutex<Service> = Mutex::new(
-        service::Service::new("http://127.0.0.1:40404/json_rpc", VPN::new().unwrap())
+        service::Service::new("http://127.0.0.1:40403/json_rpc", "http://127.0.0.1:40402/json_rpc", VPN::new().unwrap())
     .unwrap());
 
     // static ref RUNTIME: Runtime = Runtime::new().unwrap();
