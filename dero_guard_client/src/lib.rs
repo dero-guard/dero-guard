@@ -31,7 +31,7 @@ fn providers(mut cx: FunctionContext) -> JsResult<JsArray> {
 
         let location = cx.string(&provider.location);
         let name = cx.string(&provider.name);
-        let rate = cx.number(provider.rate);
+        let rate = cx.number((provider.rate  / 10 ^ 5) as f64);
         let dero_address = cx.string(&provider.dero_address);
 
         object.set(&mut cx, "location", location)?;

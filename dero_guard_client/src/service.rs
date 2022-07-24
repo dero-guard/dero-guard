@@ -24,9 +24,8 @@ impl Service {
         let mut service = Service {
             parent: CommonService::new(client),
             vpn,
-            daemon_rpc: JsonRPCClient::new("http://127.0.0.1:40402/json_rpc"), // TODO Config
+            daemon_rpc: JsonRPCClient::new(target),
             block_height: 0,
-
             connected: None
         };
 
@@ -122,10 +121,10 @@ impl Service {
                 },
             )?;
 
-        let rate = (res.valuesstring.remove(0).parse::<u64>()? / 10 ^ 5) as f64;
-        let name = res.valuesstring.remove(0);
-        let location = res.valuesstring.remove(0);
-        let dero_address = res.valuesstring.remove(0);
+        let rate = res.valuesstring.remove(0).parse::<u64>()?;
+        let name = String::from_utf8(hex::decode(res.valuesstring.remove(0))?)?;
+        let location = String::from_utf8(hex::decode(res.valuesstring.remove(0))?)?;
+        let dero_address = String::from_utf8(hex::decode(res.valuesstring.remove(0))?)?;
 
         Ok(Provider {
             location,
@@ -152,17 +151,11 @@ impl Service {
             Err(err) => panic!("{}", err),
         };
 
-        let total = match res.valuesstring.remove(0).parse::<u64>() {
-            Ok(v) => v,
-            Err(e) => panic!("{}", e),
-        };
+        let total = res.valuesstring.remove(0).parse::<u64>().unwrap();
         let mut providers = vec![];
         let mut i = 0;
         while i < total {
-            providers.push(match self.get_provider(i) {
-                Ok(v) => v,
-                Err(err) => panic!("{}", err),
-            });
+            providers.push(self.get_provider(i).unwrap());
             i = i + 1;
         }
 

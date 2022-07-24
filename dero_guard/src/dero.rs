@@ -97,5 +97,5 @@ pub struct Provider {
     pub name: String,
     pub location: String,
     pub dero_address: String,
-    pub rate: f64
+    pub rate: u64 // atomic units
 }

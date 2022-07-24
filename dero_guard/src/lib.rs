@@ -2,6 +2,7 @@ use fern::colors::{ColoredLevelConfig, Color};
 use log::Level;
 
 pub use log;
+pub use clap;
 
 pub mod command;
 pub mod dero;
@@ -9,7 +10,7 @@ pub mod json_rpc;
 pub mod service;
 pub mod wg;
 
-pub const SCID: &str = "e48de7a8cb79a71a60ed75121fc28a972dfe964be85942f9570837996eb5f5ed";
+pub const SCID: &str = "b0b6eff653ef41ea5a73e7f0ee24833a930969a93ea91664e06a828d1be60997";
 
 // configure fern and print prompt message after each new output
 pub fn setup_logger(debug: bool, disable_file_logging: bool) -> Result<(), fern::InitError> {
@@ -52,7 +53,7 @@ pub fn setup_logger(debug: bool, disable_file_logging: bool) -> Result<(), fern:
                 pad,
                 message
             ))
-        }).chain(fern::log_file("xelis.log")?);
+        }).chain(fern::log_file("dero-guard.log")?);
         base = base.chain(file_log);
     }
 

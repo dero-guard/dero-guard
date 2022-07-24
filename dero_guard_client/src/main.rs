@@ -1,51 +1,69 @@
+use std::io::stdin;
+
 use failure::Error;
 
 mod service;
 mod vpn;
 
-use dero_guard::{setup_logger, log};
+use dero_guard::{setup_logger, log, clap, clap::Parser};
 use service::Service;
 use vpn::VPN;
 
-fn main() { // TODO Refactor
-    if let Err(e) = setup_logger(true, true) {
+const DEFAULT_DAEMON_ADDRESS: &str = "127.0.0.1:40402";
+
+#[derive(Parser)]
+pub struct Config {
+    /// Enable the debug
+    #[clap(short, long)]
+    debug: bool,
+    /// Disable the log file
+    #[clap(short = 'f', long)]
+    disable_file_logging: bool,
+    /// Disconnect from the server address VPN
+    #[clap(short = 'x', long)]
+    disconnect: Option<String>,
+    /// DERO daemon address
+    #[clap(short = 'a', long, default_value_t = String::from(DEFAULT_DAEMON_ADDRESS))]
+    daemon_address: String
+}
+
+fn main() {
+    let config: Config = Config::parse();
+    if let Err(e) = setup_logger(config.debug, config.disable_file_logging) {
         eprintln!("Error while initializing logger: {}", e);
         return;
     }
 
-    if std::env::args().len() < 2 {
-        log::info!("Usage: dero_guard_client [--disconnect <server_ip>] <dero_address>");
-        return;
-    }
-
-    if let Err(e) = start_service() {
+    if let Err(e) = start_service(config) {
         log::error!("Error during starting service: {}", e);
     }
 }
 
-fn start_service() -> Result<(), Error> {
+fn start_service(config: Config) -> Result<(), Error> {
     let mut vpn = VPN::new()?;
-    let mut args: Vec<String> = std::env::args().collect();
-    if let Some((i, _)) = args.iter().enumerate().find(|(_, s)| *s == "--disconnect") {
-        if let Some(address) = args.get(i + 1) {
-            vpn.disconnect(address)?;
-        } else {
-            log::error!("--disconnect requires the server IP address");
-        }
-
-        return Ok(());
+    if let Some(address) = config.disconnect {
+        log::info!("Trying to disconnect from '{}'", address);
+        vpn.disconnect(&address)?;
+        return Ok(())
     }
 
-    let mut service = Service::new("http://127.0.0.1:40404/json_rpc", vpn)?;
-    let providers = service.get_providers();
-    for provider in providers {
+    let mut service = Service::new(&format!("http://{}/json_rpc", config.daemon_address), vpn)?;
+    let mut providers = service.get_providers();
+    log::info!("Please select one of next providers ({}):", providers.len());
+    log::info!("{0: <10} | {1: <10} | {2: <10} | {3: <10} | {4: <10}", "Id", "Name", "Location", "Price", "Address");
+    for (i, provider) in providers.iter().enumerate() {
         log::info!(
-            "Name: {} | Location: {} | Price per GB: {} | Address: {}",
-            provider.name, provider.location, provider.rate, provider.dero_address
+            "{0: <10} | {1: <10} | {2: <10} | {3: <10} | {4: <10}",
+            i, provider.name, provider.location, provider.rate, provider.dero_address
         );
     }
 
-    service.connect(args.remove(1), 1)?;
+    log::info!("Provider selected: ");
+    let mut input = String::new();
+    stdin().read_line(&mut input)?;
+    let id = input.trim().parse::<usize>()?;
+    let selected = providers.remove(id);
+    service.connect(selected.dero_address, selected.rate)?;
 
     Ok(())
 }
